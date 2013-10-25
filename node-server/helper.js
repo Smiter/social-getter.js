@@ -22,7 +22,7 @@ module.exports.getPostedTime = function (stamp1,stamp2) {
     else{
     	return date2.getFullYear() + " " + date2.getDate() +" " + months[date2.getMonth()];
     }
-}
+};
 
 
 
