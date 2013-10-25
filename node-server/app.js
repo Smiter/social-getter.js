@@ -1,75 +1,105 @@
 var express = require('express');
-var unio = require('unio')
-
-var client = unio()
+var request = require('request')
+var config = require('./config')
 var app = express();
-var fbAccessToken = null
 
+function sendRequest(params, callback){
+    var self = this
+    var validCallback = callback && typeof callback === 'function'
 
-function getTwitterFeed(){
-	
+    request(params, function (err, res, body) {
+        if (err) {
+            if (validCallback)
+                return callback(err, null)
+            throw err
+        }
+
+        var parsed = null
+        // attempt to parse the string as JSON
+        // if we fail, pass the callback the raw response body
+        try {
+            parsed = JSON.parse(body)
+        } catch (e) {
+            parsed = body
+        } finally {
+            if (validCallback)
+                return callback(null, res, parsed)
+        }
+    })
 }
+
+
 app.get('/', function(req, res){
-var result = "<ul>";
-	var params = {
-	    q: 'pic.twitter.com',
-	    count: 20,
-	    oauth: {
-	        consumer_key:       'nXKh2SnwAJelbx5qkNj2g',
-	        consumer_secret:    'T0AlQBmw7cBZAvod0dTjBQ6ttrvF3nErXVzC5rlsU',
-	        token:              '75014082-voQhmba9KOPEBiueTeD3n0k2z2zyNgBzuKcydgDWH',
-	        token_secret:       '2nvivdQSna4ZUtR5Alcc2nUPjfOh41iKEh3LntpqOsd76',
-	    }
+
+	var result = {images: {	twitter : null,	fb: null, instagram: null}};
+
+    var twitter_params = {
+		method: 'get',
+		url: 'https://api.twitter.com/1.1/statuses/user_timeline.json',
+	    qs: {
+	    	screen_name: 'discoveratlanta',
+	    	count: 200,
+	    	exclude_replies: 1,
+	    	include_rts: 0,
+	    },
+	    //oauth : {
+	    //consumer_key:       '',
+	    //consumer_secret:    '',
+	    //token:              '',
+	    //token_secret:       '',
+		//}
+	    oauth: config.twitter.oauth
 	}
-    
-    
-	client.use('twitter').get('search/tweets', params, function (err, response, body) {
-		body.statuses.forEach(function(element, index, array){
+	
+	sendRequest(twitter_params, function (err, response, body){
+		var images = Array();
+		body.forEach(function(element, index, array){
 			var media = element.entities.media;
 			if(media != undefined && media != null && media.length > 0){
 				media.forEach(function(element, index, array){
-					result += '<li><img src="'+ element.media_url + '" /></li>';
+					images.push(element.media_url)
 				})
 				
 			}
 		});
-       // res.writeHead(200, {'Content-Type': 'text/html'});
-       //res.write(result);
-      //  res.end();
-    });
+		result.images.twitter = images;
+	});
 
-    
+	var fbAccessToken = null
 
-    var oauthParams = {
-            client_id: "210410175805402",
-            client_secret: "1df32bf603f40f0d0a3839c5492772bf",
-            grant_type: 'client_credentials'
-        }
+	var facebook_get_oauth_token_params = {
+		method: 'get',
+		url: 'https://graph.facebook.com/oauth/access_token',
+		//   oauth : {
+	    //   client_id: "",
+        //   client_secret: "",
+        //   grant_type: 'client_credentials'
+		// }
+	    qs: config.fb.oauth
+	}
 
-        client
-            .use('fb')
-            .get('oauth/access_token', oauthParams, function (err, res2, body) {
-                fbAccessToken = body.replace('access_token=', '')
-                console.log(fbAccessToken)
-                var params = {
-			    	q: 'newyork',
-			    	access_token: fbAccessToken
-				}
-				client.use('fb').get('search', params, function (err, response, body) {
-			        	body.data.forEach(function(element, index, array){
-			        		if(element.picture != undefined && element.picture != null){
-			        			//for getting bigger image, do not always works.
-			        			//result += '<li><img src="'+ element.picture.substring(0, element.picture.lastIndexOf(".")-1)+"n.jpg" + '" /></li>';
-			        			result += '<li><img src="'+ element.picture + '" /></li>';
-			        		}
-			        	});
-			        	result += "</ul>"
-			            res.writeHead(200, {'Content-Type': 'text/html'});
-					    //res.write(JSON.stringify(body.data));
-					    res.write(result);
-					    res.end();
-			    })
-            })  
+    sendRequest(facebook_get_oauth_token_params, function (err, res2, body) {
+        fbAccessToken = body.replace('access_token=', '');
+        var user = 'discoveratlanta';
+        var fb_params = {
+        	method: 'get',
+			url: 'https://graph.facebook.com/' + user + '/posts',
+	    	qs: {
+	    		access_token: fbAccessToken
+			}
+		}
+		sendRequest(fb_params, function (err, response, body) {
+				var images = Array();
+	        	body.data.forEach(function(element, index, array){
+	        		if(element.picture != undefined && element.picture != null){
+	        			images.push(element.picture)
+	        		}
+	        	});
+	        	result.images.fb = images;
+			    res.write(JSON.stringify(result));
+			    res.end();
+	    })
+    })  
 	   
 });
 
