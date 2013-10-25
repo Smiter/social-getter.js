@@ -1,7 +1,9 @@
 var express = require('express');
 var request = require('request')
 var config = require('./config')
+var helper = require('./helper')
 var app = express();
+
 
 function sendRequest(params, callback){
     var self = this
@@ -31,13 +33,13 @@ function sendRequest(params, callback){
 
 app.get('/', function(req, res){
 
-	var result = {images: {	twitter : null,	fb: null, instagram: null}};
-
+	var result = {posts: {	twitter : null,	fb: null, instagram: null}};
+    var user = 'discoveratlanta';
     var twitter_params = {
 		method: 'get',
 		url: 'https://api.twitter.com/1.1/statuses/user_timeline.json',
 	    qs: {
-	    	screen_name: 'discoveratlanta',
+	    	screen_name: user,
 	    	count: 200,
 	    	exclude_replies: 1,
 	    	include_rts: 0,
@@ -52,17 +54,22 @@ app.get('/', function(req, res){
 	}
 	
 	sendRequest(twitter_params, function (err, response, body){
-		var images = Array();
+		var posts = Array();
 		body.forEach(function(element, index, array){
+			var post = {};
 			var media = element.entities.media;
+
 			if(media != undefined && media != null && media.length > 0){
-				media.forEach(function(element, index, array){
-					images.push(element.media_url)
+				media.forEach(function(image_element, index, array){
+					post["image"] = image_element.media_url;
+					post["created_time"] =  helper.getPostedTime(new Date().getTime(), Math.round(new Date(element.created_at).getTime()/1000)); 
+					post["text"] = element.text;
+					posts.push(post)
 				})
-				
 			}
+			
 		});
-		result.images.twitter = images;
+		result.posts.twitter = posts;
 	});
 
 	var fbAccessToken = null
@@ -85,17 +92,22 @@ app.get('/', function(req, res){
         	method: 'get',
 			url: 'https://graph.facebook.com/' + user + '/posts',
 	    	qs: {
-	    		access_token: fbAccessToken
+	    		access_token: fbAccessToken,
+	    		date_format: "U"
 			}
 		}
 		sendRequest(fb_params, function (err, response, body) {
-				var images = Array();
+			    var posts = Array();
 	        	body.data.forEach(function(element, index, array){
+	        		var post = {};
 	        		if(element.picture != undefined && element.picture != null){
-	        			images.push(element.picture)
+	        			post["image"] = element.picture;
+	        			post["text"] = element.message;
+	        			post["created_time"] = helper.getPostedTime(new Date().getTime(), element.created_time);
+	        			posts.push(post)
 	        		}
 	        	});
-	        	result.images.fb = images;
+	        	result.posts.fb = posts;
 			    res.write(JSON.stringify(result));
 			    res.end();
 	    })
