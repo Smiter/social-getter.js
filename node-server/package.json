@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "express": "3.4.2",
-    "request": "2.27.0"
+    "request": "2.27.0",
+    "winston": "0.7.2"
   }
 }
