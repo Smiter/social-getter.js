@@ -62,13 +62,17 @@ app.get('/', function(req, res){
             if(media != undefined && media != null && media.length > 0){
                 media.forEach(function(image_element, index, array){
                     post["image"] = image_element.media_url;
-                    post["created_time"] =  helper.getPostedTime(new Date().getTime(), Math.round(new Date(element.created_at).getTime()/1000));
-                    post["text"] = element.text;
-                    posts.push(post);
+					post["created_time"] =  helper.getPostedTime(new Date().getTime(), Math.round(new Date(element.created_at).getTime()/1000)); 
+					post["text"] = element.text;
+					post["author"] = element.user.name
+					post["author_nickname"] = element.user.screen_name
+					post["avatar"] = element.user.profile_image_url;
+					posts.push(post)
                 })
             }
 
         });
+
         result.posts.twitter = posts;
     });
 
@@ -84,6 +88,7 @@ app.get('/', function(req, res){
         // }
         qs: config.fb.oauth
     };
+
 
     sendRequest(facebook_get_oauth_token_params, function (err, res2, body) {
         fbAccessToken = body.replace('access_token=', '');
@@ -101,13 +106,18 @@ app.get('/', function(req, res){
             body.data.forEach(function(element, index, array){
                 var post = {};
                 if(element.picture != undefined && element.picture != null){
-                    post["image"] = element.picture;
-                    post["text"] = element.message;
-                    post["created_time"] = helper.getPostedTime(new Date().getTime(), element.created_time);
-                    posts.push(post)
+                    post["image"] = "https://graph.facebook.com/"+element.object_id+"/picture";
+        			post["text"] = element.message;
+        			post["created_time"] = helper.getPostedTime(new Date().getTime(), element.created_time);
+        			post["author"] = element.from.name;
+        			post["avatar"] = "https://graph.facebook.com/"+element.from.id+"/picture";
+        			posts.push(post)
                 }
             });
             result.posts.fb = posts;
+            result.posts.instagram = posts;
+            res.write(JSON.stringify(result));
+            res.end();
         });
     });
 
@@ -143,8 +153,6 @@ app.get('/', function(req, res){
                 posts.push(post);
             });
             result.posts.instagram = posts;
-            res.write(JSON.stringify(result));
-            res.end();
         });
     });
 });
