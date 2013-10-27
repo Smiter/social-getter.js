@@ -8,7 +8,7 @@ function getLogger(module) {
             new winston.transports.Console({
                 colorize:   true,
                 level:      'debug',
-                label:      path
+                label:      path,
             })
         ]
     });
