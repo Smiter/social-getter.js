@@ -51,5 +51,7 @@ module.exports.getPostedTime = function (stamp1,stamp2) {
     }
 };
 
+module.exports.social_media = ['twitter', 'facebook', 'instagram'];
+
 
 

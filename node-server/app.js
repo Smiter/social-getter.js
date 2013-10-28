@@ -10,9 +10,26 @@ app.use(express.logger('dev'));
 app.use(express.bodyParser());
 
 
-app.get('/api/twitter/:id', function(req, res){
-    //var user = 'discoveratlanta';
-    var id = req.params.id;
+function isCollectionEmpty(social_name, id, callback){
+    if(!callback || typeof callback !== 'function')
+        throw new Error("please provide callback");
+    if(helper.social_media.indexOf(social_name) < 0){
+        throw new Error(social_name + " social media is not supported");
+    }
+    db.connect(function(conn){
+        var query = {}
+        query["user"] = id;
+        conn.collection(social_name).find(query, {}, {"limit": 1}).toArray(function(err, items){
+            if(items.length == 1){
+                callback(false);
+            }else{
+                callback(true);
+            }
+        });
+    });
+}
+
+function getTwitterFeed(id, callback){
     var twitter_params = {
         method: 'get',
         url: 'https://api.twitter.com/1.1/statuses/user_timeline.json',
@@ -36,29 +53,28 @@ app.get('/api/twitter/:id', function(req, res){
                     post["_id"] = element.id;
                     post["image"] = image_element.media_url;
                     post["timestamp"] = new Date(element.created_at).getTime();
-					post["created_time"] =  helper.getPostedTime(new Date().getTime(), Math.round(new Date(element.created_at).getTime()/1000)); 
-					post["text"] = element.text;
-					post["author"] = element.user.name
-					post["author_nickname"] = element.user.screen_name
-					post["avatar"] = element.user.profile_image_url;
-					posts.push(post)
+                 post["created_time"] =  helper.getPostedTime(new Date().getTime(), Math.round(new Date(element.created_at).getTime()/1000)); 
+                 post["text"] = element.text;
+                 post["author"] = element.user.name
+                 post["author_nickname"] = element.user.screen_name
+                 post["avatar"] = element.user.profile_image_url;
+                 posts.push(post)
                 })
             }
 
         });
         db.connect(function(conn){
-            posts.forEach(function(element, index,array){
-                 conn.collection('twitter').insert(element, { w: 0 });
-            });
+            var obj = {}
+            obj["user"] = id;
+            obj["posts"] = posts;
+            conn.collection('twitter').insert(obj, { w: 0 });
         });
         log.info("twitter posts have been sent");
-        res.send(posts);
+        callback(posts);
     });
-});
+}
 
-app.get('/api/facebook/:id', function(req, res){
-    //var user = 'discoveratlanta';
-    var id = req.params.id;
+function getFacebookFeed(id, callback){
     var fbAccessToken = null;
 
     var facebook_get_oauth_token_params = {
@@ -97,20 +113,18 @@ app.get('/api/facebook/:id', function(req, res){
                 }
             });
             db.connect(function(conn){
-                posts.forEach(function(element, index,array){
-                     conn.collection('facebook').insert(element, { w: 0 });
-                });
+                var obj = {}
+                obj["user"] = id;
+                obj["posts"] = posts;
+                conn.collection('facebook').insert(obj, { w: 0 });
             });
             log.info("fb posts have been sent");
-            res.send(posts);
+            callback(posts);
         });
     });
-});
+}
 
-
-app.get('/api/instagram/:id', function(req, res){
-    //var user = 'discoveratlanta';
-    var id = req.params.id;
+function getInstagramFeed(id, callback){
     var instagram_get_user_id_params = {
         method: 'get',
         url: 'https://api.instagram.com/v1/users/search',
@@ -146,14 +160,56 @@ app.get('/api/instagram/:id', function(req, res){
                 posts.push(post);
             });
             db.connect(function(conn){
-                posts.forEach(function(element, index,array){
-                     conn.collection('instagram').insert(element, { w: 0 });
-                });
+                var obj = {}
+                obj["user"] = id;
+                obj["posts"] = posts;
+                conn.collection('instagram').insert(obj, { w: 0 });
             });
-            log.info("instagram posts have been sent")
-            res.send(posts);
+            log.info("instagram posts have been sent");
+            callback(posts);
         });
     });
+}
+
+app.get('/api/:social_name/:id', function(req, res){
+    var id = req.params.id;
+    var social_name = req.params.social_name;
+    isCollectionEmpty(social_name, id, function(isEmpty){
+        if(isEmpty){
+            switch(social_name){
+                case "twitter":
+                    getTwitterFeed(id, function(posts){
+                        res.send(posts);
+                    });
+                    break;
+
+                case "facebook":
+                    getFacebookFeed(id, function(posts){
+                        res.send(posts);
+                    });
+                    break;
+
+                case "instagram":
+                    getInstagramFeed(id, function(posts){
+                        res.send(posts);
+                    });
+                    break;
+            }
+        }else{
+            db.connect(function(conn){
+                var query = {}
+                query["user"] = id;
+                var options = {
+                    "limit": 20
+                }
+                conn.collection(social_name).find(query, {}, options).each(function(err, item){
+                    if(item)
+                        res.send(item.posts);
+                });
+            });
+        }
+    });
+    // //var user = 'discoveratlanta';
 });
 
 app.use(function(req, res, next){
@@ -169,9 +225,5 @@ app.use(function(err, req, res, next){
     res.send({ error: err.message });
     return;
 });
-
-app.get('/ErrorExample', function(req, res, next){
-    next(new Error('Random error!'));
-})
 
 app.listen(3000);
