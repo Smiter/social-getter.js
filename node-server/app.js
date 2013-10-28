@@ -202,9 +202,13 @@ app.get('/api/:social_name/:id', function(req, res){
                 var options = {
                     "limit": 20
                 }
-                conn.collection(social_name).find(query, {}, options).each(function(err, item){
-                    if(item)
-                        res.send(item.posts);
+                conn.collection(social_name).find(query, {}, options).toArray(function(err, items){
+                    if(req.query.offset){
+                        res.send(items[0].posts.slice(req.query.offset))
+                    }else{
+                        res.send(items[0].posts);
+                    }
+                   
                 });
             });
         }
