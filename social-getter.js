@@ -27,23 +27,29 @@
 		*/
 		var init = function(){
 			social.settings = $.extend({}, defaults, options);
-			sendRequest("https://api.twitter.com/1.1/search/tweets.json?q=%23freebandnames&since_id=24012619984051000&max_id=250126199840518145&result_type=mixed&count=4");
+			sendRequest("http://127.0.0.1:3000/api/"+
+				social.settings.social_name+"/"+social.settings.user, function(data){
+					var list = "<ul>";
+					data.forEach(function(element, index, array){
+						list = list + "<li><img src=" + element.image + "/></li>";
+					});
+					list = list + "</ul>";
+					$(that).append(list);
+				});
 		}
 
-		var sendRequest = function(url){
+		var sendRequest = function(url, callback){
 			var jqxhr = $.ajax({
-				dataType: "json",
-				type: "GET",
   				url: url,
+  				dataType:"json"
 			})
 		    .done(function(data) {
-		    	console.log( "success: data = " + data);
+		    	callback(data);
 		    })
 		    .fail(function(data) {
-		    	console.log( "error: data = " + data);
+		    	console.log("fail");
 		    })
 		    .always(function(data) {
-		    	console.log( "complete: data = " + data);
 		    });
 		}
 

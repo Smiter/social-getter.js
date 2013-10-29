@@ -3,12 +3,23 @@ var request = require('request');
 var config = require('./libs/config');
 var helper = require('./libs/helper');
 var log = require('./libs/log')(module);
-var db = require('./libs/db');
 var app = express();
 var db = require('./libs/db');
-app.use(express.logger('dev'));
-app.use(express.bodyParser());
 
+app.configure(function() {
+  app.use(express.cookieParser());
+  app.use(express.multipart());
+  app.use(express.methodOverride());
+  app.use(express.logger('dev'));
+  app.use(express.bodyParser());
+  app.use(function(req, res, next) {
+    res.header('Access-Control-Allow-Credentials', true);
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+    next();
+  });
+});
 
 function isCollectionEmpty(social_name, id, callback){
     if(!callback || typeof callback !== 'function')
