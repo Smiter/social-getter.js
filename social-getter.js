@@ -31,7 +31,7 @@
 				social.settings.social_name+"/"+social.settings.user, function(data){
 					var list = "<ul>";
 					data.forEach(function(element, index, array){
-						list = list + "<li><img src=" + element.image + "/></li>";
+						list = list + "<li><img src=\"" + element.image + "\"/></li>";
 					});
 					list = list + "</ul>";
 					$(that).append(list);

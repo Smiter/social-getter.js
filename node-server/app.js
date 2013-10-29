@@ -30,12 +30,9 @@ function isCollectionEmpty(social_name, id, callback){
     db.connect(function(conn){
         var query = {}
         query["user"] = id;
-        conn.collection(social_name).find(query, {}, {"limit": 1}).toArray(function(err, items){
-            if(items.length == 1){
-                callback(false);
-            }else{
-                callback(true);
-            }
+        query["social_name"] = social_name;
+        conn.collection("posts").findOne(query, function(err, first_post){
+            callback(first_post===null);
         });
     });
 }
@@ -57,28 +54,29 @@ function getTwitterFeed(id, callback){
     helper.sendRequest(twitter_params, function (err, response, body){
         var posts = Array();
         body.forEach(function(element, index, array){
-            var post = {};
             var media = element.entities.media;
             if(media != undefined && media != null && media.length > 0){
                 media.forEach(function(image_element, index, array){
+                    var post = {};
+                    post["user"] = id;
+                    post["social_name"] = "twitter";
                     post["_id"] = element.id;
                     post["image"] = image_element.media_url;
                     post["timestamp"] = new Date(element.created_at).getTime();
-                 post["created_time"] =  helper.getPostedTime(new Date().getTime(), Math.round(new Date(element.created_at).getTime()/1000)); 
-                 post["text"] = element.text;
-                 post["author"] = element.user.name
-                 post["author_nickname"] = element.user.screen_name
-                 post["avatar"] = element.user.profile_image_url;
-                 posts.push(post)
+                    post["created_time"] =  helper.getPostedTime(new Date().getTime(), Math.round(new Date(element.created_at).getTime()/1000));
+                    post["text"] = element.text;
+                    post["author"] = element.user.name
+                    post["author_nickname"] = element.user.screen_name
+                    post["avatar"] = element.user.profile_image_url;
+                    posts.push(post)
                 })
             }
 
         });
         db.connect(function(conn){
-            var obj = {}
-            obj["user"] = id;
-            obj["posts"] = posts;
-            conn.collection('twitter').insert(obj, { w: 0 });
+            posts.forEach(function(post, index, array){
+                conn.collection('posts').insert(post, { w: 0 });
+            });
         });
         log.info("twitter posts have been sent");
         callback(posts);
@@ -110,6 +108,8 @@ function getFacebookFeed(id, callback){
             body.data.forEach(function(element, index, array){
                 var post = {};
                 if(element.picture != undefined && element.picture != null){
+                    post["user"] = id;
+                    post["social_name"] = "facebook";
                     if(element.object_id)
                         post["image"] = "https://graph.facebook.com/"+element.object_id+"/picture";
                     else
@@ -124,10 +124,9 @@ function getFacebookFeed(id, callback){
                 }
             });
             db.connect(function(conn){
-                var obj = {}
-                obj["user"] = id;
-                obj["posts"] = posts;
-                conn.collection('facebook').insert(obj, { w: 0 });
+                posts.forEach(function(post, index, array){
+                    conn.collection('posts').insert(post, { w: 0 });
+                });
             });
             log.info("fb posts have been sent");
             callback(posts);
@@ -160,6 +159,8 @@ function getInstagramFeed(id, callback){
             var posts = [];
             body.data.forEach(function(element, index, array){
                 var post = {};
+                post["user"] = id;
+                post["social_name"] = "instagram";
                 post["image"] = element.images.standard_resolution.url;
                 if(element.caption)
                     post["text"] = element.caption.text;
@@ -171,10 +172,9 @@ function getInstagramFeed(id, callback){
                 posts.push(post);
             });
             db.connect(function(conn){
-                var obj = {}
-                obj["user"] = id;
-                obj["posts"] = posts;
-                conn.collection('instagram').insert(obj, { w: 0 });
+                posts.forEach(function(post, index, array){
+                    conn.collection('posts').insert(post, { w: 0 });
+                });
             });
             log.info("instagram posts have been sent");
             callback(posts);
@@ -210,16 +210,15 @@ app.get('/api/:social_name/:id', function(req, res){
             db.connect(function(conn){
                 var query = {}
                 query["user"] = id;
-                var options = {
-                    "limit": 20
+                query["social_name"] = social_name;
+                var options = {};
+                options["limit"] = 20;
+                options["sort"] =  [["timestamp","desc"]];
+                if (req.query.offset){
+                    options["skip"] = req.query.offset;
                 }
-                conn.collection(social_name).find(query, {}, options).toArray(function(err, items){
-                    if(req.query.offset){
-                        res.send(items[0].posts.slice(req.query.offset))
-                    }else{
-                        res.send(items[0].posts);
-                    }
-                   
+                conn.collection("posts").find(query, {}, options).toArray(function(err, items){
+                    res.send(items);
                 });
             });
         }
