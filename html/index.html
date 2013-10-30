@@ -1,21 +1,13 @@
 <html>
 	<head>
+		<link rel="stylesheet" href="style.css"> 
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-		<script src="../social-getter.js"></script>
+		<script src="handlebars.min-latest.js"></script>
 	</head>
-
+	
 	<body>
-		<div id="container" style="width:800px; height:800px; background: gray;">
+		<div class="social-getter" style="width:800px; height:800px;" data-user="discoveratlanta" data-social-name="facebook" data-columns="3" data-expand="true">
 		</div>
 	</body>
-
-	<script type="text/javascript">
-		$(function(){
-			var social = $("#container").socialGetter({
-				user: "discoveratlanta",
-				social_name: "facebook"
-			});
-			social.testPublic();
-		});
-	</script>
+	<script src="../social-getter.js"></script>
 </html>

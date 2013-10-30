@@ -1,0 +1,30 @@
+#holder{
+	width: 100%;
+	position: relative;
+	margin: 0 auto;
+	padding: 0px;
+}
+
+#posts_holder{
+	width: 100%;
+	display: block;
+	position: relative;
+}
+
+.post{
+	width: 310px;
+	box-shadow: 0 1px 3px rgba(34,25,25,0.4);
+	-moz-box-shadow: 0 1px 2px rgba(34,25,25,0.4);
+	-webkit-box-shadow: 0 1px 3px rgba(34,25,25,0.4);
+	background-color: #FFF;
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	height: 100%;
+	margin-top: 20px;
+	margin-left: 20px;
+}
+
+.post img{
+	width: 100%;
+}
