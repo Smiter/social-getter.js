@@ -7,7 +7,6 @@ var app = express();
 var db = require('./libs/db');
 var cronJob = require('cron').CronJob;
 
-
 app.configure(function() {
   app.use(express.cookieParser());
   app.use(express.multipart());
@@ -39,33 +38,42 @@ function isCollectionEmpty(social_name, id, callback){
     });
 }
 
-function getTwitterFeed(id, url, cycle, callback){
-    if ((url != undefined) && (url != null)) {
+function getTwitterFeed(id, max_tweet_id, cycle, callback){
+    var twitter_params = {
+        method: 'get',
+        url: 'https://api.twitter.com/1.1/statuses/user_timeline.json',
+        qs: {
+            screen_name: id,
+            count: 200,
+            exclude_replies: 1,
+            include_rts: 0
+        },
+        //oauth : {consumer_key: '',consumer_secret:'',token:'',token_secret:''}
+        oauth: config.twitter.oauth
+    }
 
-    } else {
-        var twitter_params = {
-            method: 'get',
-            url: 'https://api.twitter.com/1.1/statuses/user_timeline.json',
-            qs: {
-                screen_name: id,
-                count: 200,
-                exclude_replies: 1,
-                include_rts: 0
-            },
-            //oauth : {consumer_key: '',consumer_secret:'',token:'',token_secret:''}
-            oauth: config.twitter.oauth
-        }
+    var skip_tweet_with_max_id = false;
 
-        helper.sendRequest(twitter_params, function (err, response, body){
-            var posts = Array();
-            body.forEach(function(element, index, array){
+    //if max_id was added to the query we will get one
+    //tweet with this max_id so in order to avoid error on its
+    //inserting into db we need to skip it
+    if ((max_tweet_id != undefined) && (max_tweet_id != null)){
+        twitter_params.qs.max_id = max_tweet_id;
+        skip_tweet_with_max_id = true;
+    }
+
+    helper.sendRequest(twitter_params, function (err, response, body){
+        var posts = Array();
+        body.forEach(function(element, index, array){
+            if (!skip_tweet_with_max_id || element.id_str != max_tweet_id){
                 var media = element.entities.media;
                 if(media != undefined && media != null && media.length > 0){
                     media.forEach(function(image_element, index, array){
                         var post = {};
                         post["user"] = id;
                         post["social_name"] = "twitter";
-                        post["_id"] = element.id;
+                        post["element_id"] = element.id_str;
+                        post["_id"] = media.id_str;
                         post["image"] = image_element.media_url;
                         post["timestamp"] = new Date(element.created_at).getTime();
                         post["created_time"] =  helper.getPostedTime(new Date().getTime(), Math.round(new Date(element.created_at).getTime()/1000));
@@ -76,17 +84,25 @@ function getTwitterFeed(id, url, cycle, callback){
                         posts.push(post)
                     })
                 }
-
-            });
-            db.connect(function(conn){
-                conn.collection('posts').insert(posts, function(err, res){
-                    //getTwitterFeed...
-                });
-            });
-            log.info("twitter posts have been sent");
-            callback(posts);
+            }
         });
-    }
+        db.connect(function(conn){
+            conn.collection('posts').insert(posts, function(err, res){
+                if (err == null){
+                    if(cycle && (body.length > 0)){
+                        var max_id = body[body.length - 1].id_str;
+                        getTwitterFeed(id, max_id, cycle, function(posts){
+                           console.log('#');
+                        });
+                    }
+                } else {
+                    log.warn(err);
+                }
+            });
+        });
+        log.info("twitter posts have been sent");
+        callback(posts);
+    });
 
 }
 
@@ -231,11 +247,10 @@ function getInstagramFeed(id, url, cycle, callback){
             });
         });
     }
-
 }
 
 new cronJob({
-    cronTime: '0,15,30,45 * * * *',
+    cronTime: '0,15,30,45 * * * *', //every 15 minutes
     onTick: function() {
         db.connect(function(conn){
             var grouping = {
