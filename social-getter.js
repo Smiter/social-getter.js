@@ -34,66 +34,85 @@
 			social.settings["column_width"] = $(that).width() / social.settings.columns;
 
 			social.templates = {
-				post:
-					'<div class="post {{post._id}}" style="width: {{column_width}}px; left: 0px; top: 0px">' +
-						'<div class="post-holder">' +
-							'<div class="post-content">' +
-								'<a href="{{post.link}}" target="_blank">' +
-									'<div>' +
-										  '<img src="{{post.image}}" />' +
-									'</div>' + 
-								'</a>' +
-								'<div class="post-text">'+
-								    '<div class="post-title">'+
-						                '<p>'+
-						                    '<a href="{{post.link}}" target="_blank">{{post.text}}'+
-						                        
-						                    '</a>'+
-						                '</p>'+
-						            '</div>'+
-						            '<div class="post-timestamp">{{post.created_time}}' +
-						                         
-						            '</div>'+
-								'</div>'+
-							'</div>'+
-							'<div class="post-share">'+						       
-							'</div>'+
-							'<div class="post-accaunt">'+
-							        '<img src="{{post.avatar}}"> <a href="{{post.author_link}}" target="_blank"><b>{{post.author}}</b><br>{{#if post.author_nickname}}@{{post.author_nickname}}{{/if}}</a>'+
-							'</div>'+
+				main_template:
+					'<div id="holder">' +
+						'<div class="nav_holder">' +
+							'<ul class="collections-nav-ul" style="margin-left: -103px;">' +
+								'<li class="clickable collections-nav collections-nav-home  active" data-href="/atlanta">' +
+									'<i class="icon-home" style="position:relative;"></i>' +
+									'<div class="collection-triangle"></div>' +
+								'</li>' + 
+								'<li class="clickable collections-nav collections-nav-fb " data-href="/atlanta/facebook">' +
+									'<i class="foundicon-facebook"></i>' +
+									'<div class="collection-triangle"></div>' +
+								'</li>' +
+								'<li class="clickable collections-nav collections-nav-tw " data-href="/atlanta/twitter">' +
+									'<i class="foundicon-twitter"></i>' +
+									'<div class="collection-triangle"></div>' +
+								'</li>' +
+								'<li class="clickable collections-nav collections-nav-in " data-href="/atlanta/instagram">' +
+									'<i class="foundicon-instagram"></i>' +
+									'<div class="collection-triangle"></div>' +
+								'</li>' +
+							'</ul>' +
+						'</div>' +
+						'<div id="posts_holder">' +
+						 		'{{#each posts}}' +
+									'<div class="post {{_id}}" style="width: {{../column_width}}px; left: 0px; top: 0px">' +
+										'<div class="post-holder">' +
+											'<div class="post-content">' +
+												'<a href="{{link}}" target="_blank">' +
+													'<div>' +
+														  '<img src="{{image}}" />' +
+													'</div>' + 
+												'</a>' +
+												'<div class="post-text">'+
+												    '<div class="post-title">'+
+										                '<p>'+
+										                    '<a href="{{link}}" target="_blank">{{text}}'+
+										                        
+										                    '</a>'+
+										                '</p>'+
+										            '</div>'+
+										            '<div class="post-timestamp">{{created_time}}' +
+										                         
+										            '</div>'+
+												'</div>'+
+											'</div>'+
+											'<div class="post-share">'+						       
+											'</div>'+
+											'<div class="post-accaunt">'+
+											        '<img src="{{avatar}}"> <a href="{{author_link}}" target="_blank"><b>{{author}}</b><br>{{#if author_nickname}}@{{author_nickname}}{{/if}}</a>'+
+											'</div>'+
+										'</div>'+
+									'</div>' +
+								'{{/each}}' + 
 						'</div>'+
 					'</div>'
 			}
+
 			sendRequest(social.settings.api_url + social.settings.social_name + "/" + social.settings.user, function(data){
-				var result = '<div id="holder"><div id="posts_holder"></div></div>';
+
+				var result = compileTemplate(social.templates.main_template, {posts: data, column_width: social.settings.column_width - social.settings.column_paddings_l_r})
 				$(that).append(result);
-				var left = 0;
-				var top = 0;
 
 				var left_array = [];
 				for(var i = 0; i < social.settings.columns; i ++){
 					left_array[i] = i * (social.settings.column_width - social.settings.column_paddings_t_b);
 				}
-				var i = 0;
-				var l = left_array.length;
-				var result = "";
-				data.forEach(function(element, index, array){
-					result = result + compileTemplate(social.templates.post, {post: element, column_width: social.settings.column_width - social.settings.column_paddings_l_r});
-				});
-				$("#posts_holder").append(result);
 
+				var i = 0;
 				function setPostPositions(){
 					data.forEach(function(element, index, array){
+						var curr_post = $("#posts_holder ." + array[index]._id);
 						if(index-social.settings.columns >= 0){
-							top = $("#posts_holder ." + array[index-social.settings.columns]._id).position().top +
-								$("#posts_holder ." + array[index-social.settings.columns]._id).height() + social.settings.column_paddings_t_b;
-							$("#posts_holder ." + array[index]._id).css("top", top +"px");
+							var html_prev_post = $("#posts_holder ." + array[index-social.settings.columns]._id);
+							var top = html_prev_post.position().top +	html_prev_post.height() + social.settings.column_paddings_t_b;
+							curr_post.css("top", top +"px");
 						}
-						left = left_array[i];
-						i++;
-						if(i == left_array.length)
+						curr_post.css("left", left_array[i]+"px");
+						if(++i == left_array.length)
 							i = 0;
-						$("#posts_holder ." + array[index]._id).css("left", left+"px");
 					});
 				}
 				function checkIfImagesLoaded(callback){

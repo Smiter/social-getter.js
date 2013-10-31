@@ -1,3 +1,29 @@
+@font-face{
+	font-family:'FontAwesome';
+	src:url('//netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.eot');
+	src:url('//netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.eot?#iefix') format('embedded-opentype'),
+	url('//netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.woff') format('woff'),
+	url('//netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.ttf') format('truetype');
+	font-weight:normal;
+	font-style:normal
+}
+
+[class^="icon-"],[class*=" icon-"]
+{
+	font-family:FontAwesome;
+	font-weight:normal;
+	font-style:normal;
+	text-decoration:inherit;
+	display:inline;
+	width:auto;
+	height:auto;
+	line-height:normal;
+	vertical-align:baseline;
+	background-image:none!important;
+	background-position:0 0;
+	background-repeat:repeat
+}
+
 #holder{
 	width: 100%;
 	position: relative;
@@ -122,4 +148,58 @@
 	font-size: 13px;
 }
 
+.nav_holder {
+	text-align: center;
+	padding-top: 42px;
+	z-index: 9;
+	top: 0;
+	display: block;
+	padding-top: 42px;
+	width: 100%;
+}
+
+.nav_holder ul {
+	list-style-type: none;
+	position: absolute;
+	left: 50%;
+	padding: 8px 10px;
+	top: -8px;
+}
+
+.nav_holder li:hover, .nav_holder li.active {
+	text-decoration: none;
+	opacity: 1;
+}
+
+.nav_holder li.collections-nav-home {
+	margin-left: 0;
+	font-size: 21px;
+	padding: 1px 4px;
+	top: -2px !important;
+}
+
+.nav_holder li {
+	display: inline-block;
+	margin-left: 6px;
+	color: white;
+	padding: 1px 7px;
+	font-size: 18px;
+	height: 26px;
+	line-height: 1.5;
+	opacity: 1;
+	margin-top: 5px;
+}
+
+.color-namebar-buttons, li.collections-nav {
+	background-color: #CC0000;
+}
+
+.clickable {
+	cursor: hand;
+	cursor: pointer;
+}
+
+.icon-home:before {
+	content: "\f015";
+}
 
