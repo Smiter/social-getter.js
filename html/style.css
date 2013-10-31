@@ -3,15 +3,30 @@
 	position: relative;
 	margin: 0 auto;
 	padding: 0px;
+	height: 100%;
+}
+
+#posts_holder a {
+	text-decoration: none;
 }
 
 #posts_holder{
 	width: 100%;
 	display: block;
 	position: relative;
+	height: 100%;
 }
 
-.post{
+#posts_holder .post-content{
+	position: relative;
+	padding: 5px;
+}
+
+.post-holder {
+	height: 100%;
+}
+
+#posts_holder .post{
 	width: 310px;
 	box-shadow: 0 1px 3px rgba(34,25,25,0.4);
 	-moz-box-shadow: 0 1px 2px rgba(34,25,25,0.4);
@@ -23,8 +38,88 @@
 	height: 100%;
 	margin-top: 20px;
 	margin-left: 20px;
+	height: auto;
 }
 
-.post img{
-	width: 100%;
+#posts_holder .post img{
+	width: auto\9;
+	height: auto;
+	max-width: 100%;
+	vertical-align: middle;
+	border: 0;
+	-ms-interpolation-mode: bicubic;
 }
+
+#posts_holder .post a{
+	display: block;
+}
+
+#posts_holder .post-text {
+	background-color: #FFF;
+}
+
+#posts_holder .post-title {
+	padding: 7px 17px;
+	line-height: 1.3;
+	font-size: 24px;
+}
+
+#posts_holder .post-title p {
+	font-size: 12px;
+	font-family: Helvetica,Arial,sans;
+}
+
+#posts_holder p {
+	margin: 0 0 10px;
+}
+
+#posts_holder .post-title a {
+	color: #3b3b3b;
+	-webkit-transition: color 0.2s ease-in;
+	-moz-transition: color 0.2s ease-in;
+	-o-transition: color 0.2s ease-in;
+	transition: color 0.2s ease-in;
+	font-style: normal;
+}
+
+#posts_holder .post-timestamp{
+	padding: 4px 17px;
+	font-size: 11px;
+	margin-top: -15px;
+	color: rgb(167, 167, 167);
+}
+
+#posts_holder .post-share{
+	width: 100%;
+	height: 35px;
+	background-color: #ecf6f5;
+}
+
+#posts_holder .post-accaunt{
+	position: absolute;
+	bottom: 6px;
+	left: 16px;
+	font-size: 10px;
+}
+
+#posts_holder .post-accaunt img {
+	width: 23px;
+	height: 23px;
+}
+
+#posts_holder .post-accaunt a {
+	margin-left: 5px;
+	color: rgba(0, 0, 0, 0.7);
+	position: absolute;
+	top: 0;
+	left: 22px;
+	width: 150px;
+	line-height: 1.1;
+	font-size: 11px;
+}
+
+#posts_holder .post-accaunt b {
+	font-size: 13px;
+}
+
+

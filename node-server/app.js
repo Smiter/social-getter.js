@@ -66,9 +66,11 @@ function getTwitterFeed(id, max_tweet_id, cycle, callback){
         var posts = Array();
         body.forEach(function(element, index, array){
             if (!skip_tweet_with_max_id || element.id_str != max_tweet_id){
+
                 var media = element.entities.media;
                 if(media != undefined && media != null && media.length > 0){
                     media.forEach(function(image_element, index, array){
+
                         var post = {};
                         post["user"] = id;
                         post["social_name"] = "twitter";
@@ -78,7 +80,10 @@ function getTwitterFeed(id, max_tweet_id, cycle, callback){
                         post["timestamp"] = new Date(element.created_at).getTime();
                         post["created_time"] =  helper.getPostedTime(new Date().getTime(), Math.round(new Date(element.created_at).getTime()/1000));
                         post["text"] = element.text;
-                        post["author"] = element.user.name
+                        //if we grab text posts then we should retrieve element.entities.urls - Array of urls inside the post
+                        post["link"] = image_element.url;
+                        post["author"] = element.user.name;
+                        post["author_link"] = "http://twitter.com/"+id
                         post["author_nickname"] = element.user.screen_name
                         post["avatar"] = element.user.profile_image_url;
                         posts.push(post)
@@ -125,6 +130,8 @@ function parseFbBodyAndSave2Db(id, body, cycle, callback){
             post["timestamp"] = element.created_time;
             post["created_time"] = helper.getPostedTime(new Date().getTime(), element.created_time);
             post["author"] = element.from.name;
+            post["author_link"] = "http://facebook.com/"+id
+            post["link"] = element.link;
             post["avatar"] = "https://graph.facebook.com/"+element.from.id+"/picture";
             posts.push(post);
         }
@@ -193,8 +200,10 @@ function parseInstBodyAndSave2Db(id, body, cycle, callback){
         post["_id"] = element.id;
         post["timestamp"] = element.created_time;
         post["created_time"] = helper.getPostedTime(new Date().getTime(), element.created_time);
-        post["user"] = element.user.username;
-        post["profile_picture"] = element.user.profile_picture;
+        post["author"] = element.user.username;
+        post["author_link"] = "http://instagram.com/"+id
+        post["link"] = element.link;
+        post["avatar"] = element.user.profile_picture;
         posts.push(post);
     });
     db.connect(function(conn){
