@@ -25,13 +25,14 @@ app.configure(function() {
 function isCollectionEmpty(social_name, id, callback){
     if(!callback || typeof callback !== 'function')
         throw new Error("please provide callback");
-    if(helper.social_media.indexOf(social_name) < 0){
+    if(social_name && helper.social_media.indexOf(social_name) < 0){
         throw new Error(social_name + " social media is not supported");
     }
     db.connect(function(conn){
         var query = {}
         query["user"] = id;
-        query["social_name"] = social_name;
+        if(social_name)
+            query["social_name"] = social_name;
         conn.collection("posts").findOne(query, function(err, first_post){
             callback(first_post===null);
         });
@@ -64,6 +65,7 @@ function getTwitterFeed(id, max_tweet_id, cycle, callback){
 
     helper.sendRequest(twitter_params, function (err, response, body){
         var posts = Array();
+
         body.forEach(function(element, index, array){
             if (!skip_tweet_with_max_id || element.id_str != max_tweet_id){
 
@@ -75,9 +77,9 @@ function getTwitterFeed(id, max_tweet_id, cycle, callback){
                         post["user"] = id;
                         post["social_name"] = "twitter";
                         post["element_id"] = element.id_str;
-                        post["_id"] = media.id_str;
+                        post["_id"] = image_element.id_str;
                         post["image"] = image_element.media_url;
-                        post["timestamp"] = new Date(element.created_at).getTime();
+                        post["timestamp"] = (new Date(element.created_at).getTime())/1000;
                         post["created_time"] =  helper.getPostedTime(new Date().getTime(), Math.round(new Date(element.created_at).getTime()/1000));
                         post["text"] = element.text;
                         //if we grab text posts then we should retrieve element.entities.urls - Array of urls inside the post
@@ -198,7 +200,7 @@ function parseInstBodyAndSave2Db(id, body, cycle, callback){
         if(element.caption)
             post["text"] = element.caption.text;
         post["_id"] = element.id;
-        post["timestamp"] = element.created_time;
+        post["timestamp"] = parseInt(element.created_time);
         post["created_time"] = helper.getPostedTime(new Date().getTime(), element.created_time);
         post["author"] = element.user.username;
         post["author_link"] = "http://instagram.com/"+id
@@ -344,8 +346,58 @@ app.get('/api/:social_name/:id', function(req, res){
             });
         }
     });
-    // //var user = 'discoveratlanta';
 });
+
+app.get('/api/:id', function(req, res){
+    var id = req.params.id;
+    var social_name = req.params.social_name;
+    isCollectionEmpty(null, id, function(isEmpty){
+        if(isEmpty){
+
+                var twitter_posts = null;
+                var fb_posts = null;
+                var instagram_posts = null;
+
+
+                function checkIfPulledAndSend(){
+                    if(twitter_posts && fb_posts && instagram_posts){
+                        var posts = twitter_posts.concat(fb_posts, instagram_posts);
+                        posts.sort(function(x, y){
+                            return y.timestamp - x.timestamp;
+                        })
+                        res.send(posts.slice(0,20));
+                    }
+                }
+
+                getTwitterFeed(id, null, false, function(posts){
+                    twitter_posts = posts;
+                    checkIfPulledAndSend();
+                });
+                getFacebookFeed(id, null, false, function(posts){
+                    fb_posts = posts;
+                    checkIfPulledAndSend();
+                });
+                getInstagramFeed(id, null, false, function(posts){
+                    instagram_posts = posts;
+                    checkIfPulledAndSend();
+                });
+        }else{
+            db.connect(function(conn){
+                var query = {}
+                query["user"] = id;
+                var options = {};
+                options["limit"] = 20;
+                options["sort"] =  [["timestamp","desc"]];
+                if (req.query.offset){
+                    options["skip"] = req.query.offset;
+                }
+                conn.collection("posts").find(query, {}, options).toArray(function(err, items){
+                    res.send(items);
+                });
+            });
+        }
+    });
+})
 
 app.use(function(req, res, next){
     res.status(404);

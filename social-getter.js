@@ -21,6 +21,7 @@
 		 * Initializes namespace settings to be used throughout plugin
 		*/
 		var init = function(){
+
 			social.settings = {
 				user: $(that).attr('data-user'),
 				social_name: $(that).attr('data-social-name'),
@@ -34,67 +35,85 @@
 			social.settings["column_width"] = $(that).width() / social.settings.columns;
 
 			social.templates = {
-				main_template:
+				wrapper:
 					'<div id="holder">' +
 						'<div class="nav_holder">' +
 							'<ul class="collections-nav-ul" style="margin-left: -103px;">' +
-								'<li class="clickable collections-nav collections-nav-home  active" data-href="/atlanta">' +
+								'<li class="clickable collections-nav collections-nav-home  active" data-href="{{user}}">' +
 									'<i class="icon-home" style="position:relative;"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' + 
-								'<li class="clickable collections-nav collections-nav-fb " data-href="/atlanta/facebook">' +
+								'<li class="clickable collections-nav collections-nav-fb " data-href="facebook/{{user}}">' +
 									'<i class="foundicon-facebook"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' +
-								'<li class="clickable collections-nav collections-nav-tw " data-href="/atlanta/twitter">' +
+								'<li class="clickable collections-nav collections-nav-tw " data-href="twitter/{{user}}">' +
 									'<i class="foundicon-twitter"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' +
-								'<li class="clickable collections-nav collections-nav-in " data-href="/atlanta/instagram">' +
+								'<li class="clickable collections-nav collections-nav-in " data-href="instagram/{{user}}">' +
 									'<i class="foundicon-instagram"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' +
 							'</ul>' +
 						'</div>' +
 						'<div id="posts_holder">' +
-						 		'{{#each posts}}' +
-									'<div class="post {{_id}}" style="width: {{../column_width}}px; left: 0px; top: 0px">' +
-										'<div class="post-holder">' +
-											'<div class="post-content">' +
-												'<a href="{{link}}" target="_blank">' +
-													'<div>' +
-														  '<img src="{{image}}" />' +
-													'</div>' + 
-												'</a>' +
-												'<div class="post-text">'+
-												    '<div class="post-title">'+
-										                '<p>'+
-										                    '<a href="{{link}}" target="_blank">{{text}}'+
-										                        
-										                    '</a>'+
-										                '</p>'+
-										            '</div>'+
-										            '<div class="post-timestamp">{{created_time}}' +
-										                         
-										            '</div>'+
-												'</div>'+
-											'</div>'+
-											'<div class="post-share">'+						       
-											'</div>'+
-											'<div class="post-accaunt">'+
-											        '<img src="{{avatar}}"> <a href="{{author_link}}" target="_blank"><b>{{author}}</b><br>{{#if author_nickname}}@{{author_nickname}}{{/if}}</a>'+
-											'</div>'+
+						'</div>' +
+					'</div>',
+
+					posts:
+				 		'{{#each posts}}' +
+							'<div class="post {{_id}}" style="width: {{../column_width}}px; left: 0px; top: 0px">' +
+								'<div class="post-holder">' +
+									'<div class="post-content">' +
+										'<a href="{{link}}" target="_blank">' +
+											'<div>' +
+												  '<img src="{{image}}" />' +
+											'</div>' + 
+										'</a>' +
+										'<div class="post-text">'+
+										    '<div class="post-title">'+
+								                '<p>'+
+								                    '<a href="{{link}}" target="_blank">{{text}}'+
+								                        
+								                    '</a>'+
+								                '</p>'+
+								            '</div>'+
+								            '<div class="post-timestamp">{{created_time}}' +
+								                         
+								            '</div>'+
 										'</div>'+
-									'</div>' +
-								'{{/each}}' + 
-						'</div>'+
-					'</div>'
+									'</div>'+
+									'<div class="post-share">'+						       
+									'</div>'+
+									'<div class="post-accaunt">'+
+									        '<img src="{{avatar}}"> <a href="{{author_link}}" target="_blank"><b>{{author}}</b><br>{{#if author_nickname}}@{{author_nickname}}{{/if}}</a>'+
+									'</div>'+
+								'</div>'+
+							'</div>' +
+						'{{/each}}'
 			}
 
-			sendRequest(social.settings.api_url + social.settings.social_name + "/" + social.settings.user, function(data){
+			var result = compileTemplate(social.templates.wrapper, {user: social.settings.user})
+			$(that).append(result);
+			renderPosts(social.settings.user);
+			menuClickHandlers();
+		}
 
-				var result = compileTemplate(social.templates.main_template, {posts: data, column_width: social.settings.column_width - social.settings.column_paddings_l_r})
-				$(that).append(result);
+
+		var menuClickHandlers = function(){
+			$(that).on("click", ".collections-nav-ul li", function(){
+				$("#posts_holder").empty();
+				renderPosts($(this).attr('data-href'));
+			});
+		}
+
+		var renderPosts = function(url){
+
+			sendRequest(social.settings.api_url + url, function(data){
+					
+				var result = compileTemplate(social.templates.posts, {posts: data, column_width: social.settings.column_width - social.settings.column_paddings_l_r})
+				$("#posts_holder").append(result);
 
 				var left_array = [];
 				for(var i = 0; i < social.settings.columns; i ++){
