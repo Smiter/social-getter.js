@@ -39,12 +39,59 @@ function isCollectionEmpty(social_name, id, callback){
     });
 }
 
-function getTwitterFeed(id, max_tweet_id, cycle, callback){
+function addPostsToDataBase(handler, options){
+    db.connect(function(conn){
+        if(options.write_next_url == false){
+            var url = {}
+            url['_id'] = options.id + options.social_name;
+            url['social_name'] = options.social_name;
+            url['next_url'] = options.next_url;
+            url['offset'] = options.number_posts;
+            conn.collection('nexturls').save(url, function(err, saved_url){
+                if(err){
+                    log.error(err);
+                }
+            });
+        }
+        
+        conn.collection('posts').insert(options.posts, {continueOnError: true}, function(err, res){
+                var query = {}
+                query["user"] = options.id;
+                query["social_name"] = options.social_name;
+                if(!err){
+                    conn.collection('posts').find(query).count(function(err, count){
+                            if(count >= options.number_posts){
+                                if(options.number_posts == 20){
+                                    var options_query = {};
+                                    options_query["limit"] = 20;
+                                    conn.collection('posts').find(query, {}, options_query).toArray(function(err, posts){
+                                        if(!err){
+                                            if(options.callback && typeof options.callback === 'function')
+                                                options.callback(posts);
+                                        }else{
+                                            log.error(err);
+                                        }
+                                    });
+                                }
+                            }else{
+                                if ((options.next_url != undefined) && (options.next_url != null)){
+                                    handler(options);
+                                }
+                            }
+                    });
+                }else{
+                    log.error(err);
+                }
+        });
+    });
+}
+
+function getTwitterFeed(options, callback){
     var twitter_params = {
         method: 'get',
         url: 'https://api.twitter.com/1.1/statuses/user_timeline.json',
         qs: {
-            screen_name: id,
+            screen_name: options.id,
             count: 200,
             exclude_replies: 1,
             include_rts: 0
@@ -58,8 +105,8 @@ function getTwitterFeed(id, max_tweet_id, cycle, callback){
     //if max_id was added to the query we will get one
     //tweet with this max_id so in order to avoid error on its
     //inserting into db we need to skip it
-    if ((max_tweet_id != undefined) && (max_tweet_id != null)){
-        twitter_params.qs.max_id = max_tweet_id;
+    if ((options.next_url != undefined) && (options.next_url != null)){
+        twitter_params.qs.max_id = options.next_url;
         skip_tweet_with_max_id = true;
     }
 
@@ -67,14 +114,14 @@ function getTwitterFeed(id, max_tweet_id, cycle, callback){
         var posts = Array();
 
         body.forEach(function(element, index, array){
-            if (!skip_tweet_with_max_id || element.id_str != max_tweet_id){
+            if (!skip_tweet_with_max_id || element.id_str != options.next_url){
 
                 var media = element.entities.media;
                 if(media != undefined && media != null && media.length > 0){
                     media.forEach(function(image_element, index, array){
 
                         var post = {};
-                        post["user"] = id;
+                        post["user"] = options.id;
                         post["social_name"] = "twitter";
                         post["element_id"] = element.id_str;
                         post["_id"] = image_element.id_str;
@@ -85,7 +132,7 @@ function getTwitterFeed(id, max_tweet_id, cycle, callback){
                         //if we grab text posts then we should retrieve element.entities.urls - Array of urls inside the post
                         post["link"] = image_element.url;
                         post["author"] = element.user.name;
-                        post["author_link"] = "http://twitter.com/"+id
+                        post["author_link"] = "http://twitter.com/"+options.id
                         post["author_nickname"] = element.user.screen_name
                         post["avatar"] = element.user.profile_image_url;
                         posts.push(post)
@@ -93,35 +140,29 @@ function getTwitterFeed(id, max_tweet_id, cycle, callback){
                 }
             }
         });
-        db.connect(function(conn){
-            conn.collection('posts').insert(posts, function(err, res){
-                if (err == null){
-                    if(cycle && (body.length > 0)){
-                        var max_id = body[body.length - 1].id_str;
-                        getTwitterFeed(id, max_id, cycle, function(posts){
-                           console.log('#');
-                        });
-                    }
-                } else {
-                    log.warn(err);
-                }
-            });
-        });
-        log.info("twitter posts have been sent");
-        callback(posts);
+
+        var max_id = body[body.length - 1].id_str;
+        
+        if(options.next_url == null || options.next_url != max_id){
+            options["next_url"] = max_id;
+            if(callback && typeof callback === 'function')
+                options["callback"] = callback;
+            options["posts"] = posts;
+            options["social_name"] = "twitter";
+            addPostsToDataBase(getTwitterFeed, options);
+        }
     });
 
 }
 
-function parseFbBodyAndSave2Db(id, body, cycle, callback){
+function parseFbBodyAndSave2Db(options, body, callback){
     var posts = Array();
-    var next_url;
     if ((body.paging != undefined) && (body.paging !== null))
-        next_url = body.paging.next;
+        var next_url = body.paging.next;
     body.data.forEach(function(element, index, array){
         var post = {};
         if(element.picture != undefined && element.picture != null){
-            post["user"] = id;
+            post["user"] = options.id;
             post["social_name"] = "facebook";
             if(element.object_id)
                 post["image"] = "https://graph.facebook.com/"+element.object_id+"/picture";
@@ -132,35 +173,28 @@ function parseFbBodyAndSave2Db(id, body, cycle, callback){
             post["timestamp"] = element.created_time;
             post["created_time"] = helper.getPostedTime(new Date().getTime(), element.created_time);
             post["author"] = element.from.name;
-            post["author_link"] = "http://facebook.com/"+id
+            post["author_link"] = "http://facebook.com/"+options.id
             post["link"] = element.link;
             post["avatar"] = "https://graph.facebook.com/"+element.from.id+"/picture";
             posts.push(post);
         }
     });
-    db.connect(function(conn){
-        conn.collection('posts').insert(posts, function(err, res){
-            if (err == null){
-                if (cycle && (next_url != undefined) && (next_url != null)){
-                    getFacebookFeed(id, next_url, cycle, function(posts){
-                        console.log('#');
-                    });
-                }
-            }
-        });
-    });
-    log.info("fb posts have been sent");
-    callback(posts);
+
+    options["next_url"] = next_url;
+    options["callback"] = callback;
+    options["posts"] = posts;
+    options["social_name"] = "facebook";
+    addPostsToDataBase(getFacebookFeed, options);
 }
 
-function getFacebookFeed(id, url, cycle, callback){
-    if ((url != undefined) && (url != null)) {
+function getFacebookFeed(options, callback){
+    if ((options.next_url != undefined) && (options.next_url != null)) {
         var fb_params = {
             method: 'get',
-            url: url
+            url: options.next_url
         }
         helper.sendRequest(fb_params, function (err, response, body) {
-            parseFbBodyAndSave2Db(id, body, cycle, callback);
+            parseFbBodyAndSave2Db(options, body, callback);
         });
     } else {
         var facebook_get_oauth_token_params = {
@@ -174,27 +208,26 @@ function getFacebookFeed(id, url, cycle, callback){
             var fbAccessToken = body.replace('access_token=', '');
             var fb_params = {
                 method: 'get',
-                url: 'https://graph.facebook.com/' + id + '/posts',
+                url: 'https://graph.facebook.com/' + options.id + '/posts',
                 qs: {
                     access_token: fbAccessToken,
                     date_format: "U"
                 }
             }
             helper.sendRequest(fb_params, function (err, response, body) {
-                parseFbBodyAndSave2Db(id, body, cycle, callback);
+                parseFbBodyAndSave2Db(options, body, callback);
             });
         });
     }
 }
 
-function parseInstBodyAndSave2Db(id, body, cycle, callback){
+function parseInstBodyAndSave2Db(options, body, callback){
     var posts = [];
-    var next_url;
     if ((body.pagination != undefined) && (body.pagination !== null))
-        next_url = body.pagination.next_url;
+        var next_url = body.pagination.next_url;
     body.data.forEach(function(element, index, array){
         var post = {};
-        post["user"] = id;
+        post["user"] = options.id;
         post["social_name"] = "instagram";
         post["image"] = element.images.standard_resolution.url;
         if(element.caption)
@@ -203,59 +236,55 @@ function parseInstBodyAndSave2Db(id, body, cycle, callback){
         post["timestamp"] = parseInt(element.created_time);
         post["created_time"] = helper.getPostedTime(new Date().getTime(), element.created_time);
         post["author"] = element.user.username;
-        post["author_link"] = "http://instagram.com/"+id
+        post["author_link"] = "http://instagram.com/"+options.id
         post["link"] = element.link;
         post["avatar"] = element.user.profile_picture;
         posts.push(post);
     });
-    db.connect(function(conn){
-        conn.collection('posts').insert(posts, function(err, res){
-            if (err == null){
-                if (cycle && (next_url != undefined) && (next_url != null)){
-                    getInstagramFeed(id, next_url, cycle, function(posts){
-                        console.log('#');
-                    });
-                }
-            }
-        });
-    });
-    log.info("instagram posts have been sent");
-    callback(posts);
+    options["next_url"] = next_url;
+    options["callback"] = callback;
+    options["posts"] = posts;
+    options["social_name"] = "instagram";
+    addPostsToDataBase(getInstagramFeed, options);
 }
 
-function getInstagramFeed(id, url, cycle, callback){
-    if ((url != undefined) && (url != null)) {
+function getInstagramFeed(options, callback){
+    if ((options.next_url != undefined) && (options.next_url != null)) {
         var instagram_next_url = {
             method: 'get',
-            url: url
+            url: options.next_url
         };
         helper.sendRequest(instagram_next_url, function(err, response, body){
-            parseInstBodyAndSave2Db(id, body, cycle, callback);
+            parseInstBodyAndSave2Db(options, body, callback);
         });
     } else {
         var instagram_get_user_id_params = {
             method: 'get',
             url: 'https://api.instagram.com/v1/users/search',
             qs: {
-                q: id, //username to search
+                q: options.id, //username to search
                 count: 1, //number of users to return
                 access_token: config.instagram.oauth.access_token
             }
         };
 
         helper.sendRequest(instagram_get_user_id_params, function (err, response, body) {
-            var user_id = body.data[0].id;
+            if(body.data){
+                var user_id = body.data[0].id;
 
-            var instagram_get_user_recent_params = {
-                method: 'get',
-                url: 'https://api.instagram.com/v1/users/' + user_id + '/media/recent',
-                qs: {
-                    access_token: config.instagram.oauth.access_token
-                }
-            };
-            helper.sendRequest(instagram_get_user_recent_params, function(err, response, body){
-                parseInstBodyAndSave2Db(id, body, cycle, callback);
-            });
+                var instagram_get_user_recent_params = {
+                    method: 'get',
+                    url: 'https://api.instagram.com/v1/users/' + user_id + '/media/recent',
+                    qs: {
+                        access_token: config.instagram.oauth.access_token
+                    }
+                };
+                helper.sendRequest(instagram_get_user_recent_params, function(err, response, body){
+                    parseInstBodyAndSave2Db(options, body, callback);
+                });
+            }else{
+                log.error("Instagram access error" + body)
+            }
         });
     }
 }
@@ -277,21 +306,28 @@ new cronJob({
                     res.forEach(function(pair, index, array){
                         var user = pair._id.user;
                         var social_name = pair._id.social_name;
+                        var options = {
+                            id: user,
+                            next_url: null,
+                            social_name: social_name,
+                            write_next_url: false,
+                            number_posts: Number.MAX_VALUE
+                        };
                         switch(social_name){
                             case "twitter":
-                                getTwitterFeed(user, null, true, function(posts){
+                                getTwitterFeed(options, function(posts){
                                     console.log("Twitter data was updated.");
                                 });
                                 break;
 
                             case "facebook":
-                                getFacebookFeed(user, null, true, function(posts){
+                                getFacebookFeed(options, function(posts){
                                     console.log("Facebook data was updated.");
                                 });
                                 break;
 
                             case "instagram":
-                                getInstagramFeed(user, null, true, function(posts){
+                                getInstagramFeed(options, function(posts){
                                     console.log("Instagram data was updated.");
                                 });
                                 break;
@@ -305,6 +341,29 @@ new cronJob({
     //timeZone is not necessary
 });
 
+//fetch posts when first visit ( collection is empty )
+// we decided to pull first 40
+function fetchPostsWhenCollectionEmpty(handler, id, social_name, callback){
+    var options = {id: id, next_url:null, write_next_url: true, number_posts: 20}
+    options["id"] = id;
+    options["social_name"] = social_name;
+    handler(options, function(posts){
+        callback(posts);
+        db.connect(function(conn){
+            var query = {}
+            query["_id"] = id+social_name;
+            query["social_name"] = social_name;
+            conn.collection("nexturls").findOne(query, function(err, post){
+                if(post != null){
+                    options["next_url"] = post.next_url;
+                    options["number_posts"] = 40;
+                    handler(options);
+                }
+            });
+        });
+    });
+}
+
 app.get('/api/:social_name/:id', function(req, res){
     var id = req.params.id;
     var social_name = req.params.social_name;
@@ -312,19 +371,19 @@ app.get('/api/:social_name/:id', function(req, res){
         if(isEmpty){
             switch(social_name){
                 case "twitter":
-                    getTwitterFeed(id, null, false, function(posts){
+                    fetchPostsWhenCollectionEmpty(getTwitterFeed, id, social_name, function(posts){
                         res.send(posts);
                     });
                     break;
 
                 case "facebook":
-                    getFacebookFeed(id, null, false, function(posts){
+                    fetchPostsWhenCollectionEmpty(getFacebookFeed, id, social_name, function(posts){
                         res.send(posts);
                     });
                     break;
 
                 case "instagram":
-                    getInstagramFeed(id, null, false, function(posts){
+                    fetchPostsWhenCollectionEmpty(getInstagramFeed, id, social_name, function(posts){
                         res.send(posts);
                     });
                     break;
@@ -339,6 +398,7 @@ app.get('/api/:social_name/:id', function(req, res){
                 options["sort"] =  [["timestamp","desc"]];
                 if (req.query.offset){
                     options["skip"] = req.query.offset;
+                    getNextFeed(id, social_name, req.query.offset, conn);
                 }
                 conn.collection("posts").find(query, {}, options).toArray(function(err, items){
                     res.send(items);
@@ -347,6 +407,34 @@ app.get('/api/:social_name/:id', function(req, res){
         }
     });
 });
+
+
+function getNextFeed(id, social_name, offset, conn){
+    var options = {
+        id: id,
+        write_next_url: true,
+        number_posts: parseInt(offset)+40
+    };
+    var urls_query = {}
+    urls_query["_id"] = id+social_name;
+    conn.collection("nexturls").findOne(urls_query, function(err, post){
+        if(post != null && post.offset < parseInt(offset) + 40){
+            options.next_url = post.next_url;
+            switch(social_name){
+                case 'facebook':
+                    getFacebookFeed(options);
+                    break;
+                case 'instagram':
+                    getInstagramFeed(options);
+                    break;
+                case "twitter":
+                    getTwitterFeed(options);
+                break;
+           }
+       }
+    });
+}
+
 
 app.get('/api/:id', function(req, res){
     var id = req.params.id;
@@ -360,8 +448,8 @@ app.get('/api/:id', function(req, res){
 
 
                 function checkIfPulledAndSend(){
-                    if(twitter_posts && fb_posts && instagram_posts){
-                        var posts = twitter_posts.concat(fb_posts, instagram_posts);
+                    if(fb_posts && instagram_posts){
+                        var posts = fb_posts.concat(instagram_posts);
                         posts.sort(function(x, y){
                             return y.timestamp - x.timestamp;
                         })
@@ -369,16 +457,19 @@ app.get('/api/:id', function(req, res){
                     }
                 }
 
-                getTwitterFeed(id, null, false, function(posts){
-                    twitter_posts = posts;
-                    checkIfPulledAndSend();
-                });
-                getFacebookFeed(id, null, false, function(posts){
-                    fb_posts = posts;
-                    checkIfPulledAndSend();
-                });
-                getInstagramFeed(id, null, false, function(posts){
+                //takes too long for twitter if account has too small amount of images
+                // temporary disable until come up with some ideas
+                // getTwitterFeed(id, null, false, function(posts){
+                //     twitter_posts = posts;
+                //     checkIfPulledAndSend();
+                // });
+                fetchPostsWhenCollectionEmpty(getInstagramFeed, id, "instagram", function(posts){
                     instagram_posts = posts;
+                    checkIfPulledAndSend();
+                });
+
+                fetchPostsWhenCollectionEmpty(getFacebookFeed, id, "facebook", function(posts){
+                    fb_posts = posts;
                     checkIfPulledAndSend();
                 });
         }else{
@@ -390,6 +481,8 @@ app.get('/api/:id', function(req, res){
                 options["sort"] =  [["timestamp","desc"]];
                 if (req.query.offset){
                     options["skip"] = req.query.offset;
+                    getNextFeed(id, "facebook", req.query.offset, conn);
+                    getNextFeed(id, "instagram", req.query.offset, conn);
                 }
                 conn.collection("posts").find(query, {}, options).toArray(function(err, items){
                     res.send(items);

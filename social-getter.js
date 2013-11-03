@@ -121,7 +121,6 @@
 			$(window).on('scroll', function(){
 				if(isHandlerOn && $(document).height() - $(window).scrollTop() - 
 					$(window).height() - 400 <= 0 && scrollTop < $(window).scrollTop()){
-					console.log("vases");
 					isHandlerOn = false;
 					offset = offset + 20;
 					renderPosts(url+"?offset=" + offset, offset, function(){
