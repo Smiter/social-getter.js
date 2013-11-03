@@ -96,19 +96,44 @@
 
 			var result = compileTemplate(social.templates.wrapper, {user: social.settings.user})
 			$(that).append(result);
-			renderPosts(social.settings.user);
+			renderPosts(social.settings.user, 0);
 			menuClickHandlers();
+			social.scrollHandler = addScrollHandler();
 		}
 
 
 		var menuClickHandlers = function(){
 			$(that).on("click", ".collections-nav-ul li", function(){
 				$("#posts_holder").empty();
-				renderPosts($(this).attr('data-href'));
+				social.scrollHandler.isHandlerOn = true;
+				social.scrollHandler.scrollTop = $(window).scrollTop();
+				social.scrollHandler.offset = 0;
+				social.scrollHandler.url = $(this).attr('data-href'); 
+				renderPosts($(this).attr('data-href'), 0);
 			});
 		}
 
-		var renderPosts = function(url){
+		var addScrollHandler = function(){
+			this.isHandlerOn = true;
+			this.offset = 0;
+			this.scrollTop = $(window).scrollTop();
+			this.url = social.settings.user;
+			$(window).on('scroll', function(){
+				if(isHandlerOn && $(document).height() - $(window).scrollTop() - 
+					$(window).height() - 400 <= 0 && scrollTop < $(window).scrollTop()){
+					console.log("vases");
+					isHandlerOn = false;
+					offset = offset + 20;
+					renderPosts(url+"?offset=" + offset, offset, function(){
+						isHandlerOn = true;
+					});
+				}
+				scrollTop = $(window).scrollTop();
+			});
+			return this;
+		}
+
+		var renderPosts = function(url, offset, callback){
 
 			sendRequest(social.settings.api_url + url, function(data){
 					
@@ -122,17 +147,25 @@
 
 				var i = 0;
 				function setPostPositions(){
+					var postElements = $("#posts_holder .post");
 					data.forEach(function(element, index, array){
 						var curr_post = $("#posts_holder ." + array[index]._id);
-						if(index-social.settings.columns >= 0){
-							var html_prev_post = $("#posts_holder ." + array[index-social.settings.columns]._id);
-							var top = html_prev_post.position().top +	html_prev_post.height() + social.settings.column_paddings_t_b;
+						if(index + offset - social.settings.columns >= 0){
+							var html_prev_post = postElements[index + offset  - social.settings.columns];
+							var top = $(html_prev_post).position().top +	$(html_prev_post).height() + social.settings.column_paddings_t_b;
 							curr_post.css("top", top +"px");
 						}
-						curr_post.css("left", left_array[i]+"px");
-						if(++i == left_array.length)
-							i = 0;
+						if(offset>0){
+							curr_post.css("left", $(html_prev_post).position().left+"px");
+						}else{
+							curr_post.css("left", left_array[i]+"px");
+							if(++i == left_array.length)
+								i = 0;
+						}
+						
 					});
+					if(callback && typeof callback === 'function')
+						callback();
 				}
 				function checkIfImagesLoaded(callback){
 					setTimeout(function(){
