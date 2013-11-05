@@ -41,7 +41,7 @@ function isCollectionEmpty(social_name, id, callback){
 
 function addPostsToDataBase(handler, options){
     db.connect(function(conn){
-        if(options.write_next_url == false){
+        if(options.write_next_url != false){
             var url = {}
             url['_id'] = options.id + options.social_name;
             url['social_name'] = options.social_name;
@@ -126,8 +126,7 @@ function getTwitterFeed(options, callback){
                         post["element_id"] = element.id_str;
                         post["_id"] = image_element.id_str;
                         post["image"] = image_element.media_url;
-                        post["timestamp"] = (new Date(element.created_at).getTime())/1000;
-                        post["created_time"] =  helper.getPostedTime(new Date().getTime(), Math.round(new Date(element.created_at).getTime()/1000));
+                        post["timestamp"] = Math.round((new Date(element.created_at).getTime())/1000);
                         post["text"] = element.text;
                         //if we grab text posts then we should retrieve element.entities.urls - Array of urls inside the post
                         post["link"] = image_element.url;
@@ -171,7 +170,6 @@ function parseFbBodyAndSave2Db(options, body, callback){
             post["_id"] = element.id;
             post["text"] = element.message;
             post["timestamp"] = element.created_time;
-            post["created_time"] = helper.getPostedTime(new Date().getTime(), element.created_time);
             post["author"] = element.from.name;
             post["author_link"] = "http://facebook.com/"+options.id
             post["link"] = element.link;
@@ -234,7 +232,6 @@ function parseInstBodyAndSave2Db(options, body, callback){
             post["text"] = element.caption.text;
         post["_id"] = element.id;
         post["timestamp"] = parseInt(element.created_time);
-        post["created_time"] = helper.getPostedTime(new Date().getTime(), element.created_time);
         post["author"] = element.user.username;
         post["author_link"] = "http://instagram.com/"+options.id
         post["link"] = element.link;

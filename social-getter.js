@@ -79,7 +79,7 @@
 								                    '</a>'+
 								                '</p>'+
 								            '</div>'+
-								            '<div class="post-timestamp">{{created_time}}' +
+								            '<div class="post-timestamp">{{#get_created_time timestamp}}{{/get_created_time}}' +
 								                         
 								            '</div>'+
 										'</div>'+
@@ -101,6 +101,10 @@
 			social.scrollHandler = addScrollHandler();
 		}
 
+		Handlebars.registerHelper('get_created_time', function(timestamp, options) {
+		  return getPostedTime(new Date().getTime(), timestamp);
+		});
+
 
 		var menuClickHandlers = function(){
 			$(that).on("click", ".collections-nav-ul li", function(){
@@ -110,6 +114,8 @@
 				social.scrollHandler.offset = 0;
 				social.scrollHandler.url = $(this).attr('data-href'); 
 				renderPosts($(this).attr('data-href'), 0);
+				$(".collections-nav-ul li").removeClass("active");
+				$(this).addClass("active");
 			});
 		}
 
@@ -213,6 +219,32 @@
 		    .always(function(data) {
 		    });
 		}
+
+		var months = Array('Jan','Feb','Mar','Apr','May', 'June','July','Aug','Sept','Oct','Nov','Dec');
+
+		var getPostedTime = function (stamp1,stamp2) {
+		    var date1 = new Date(stamp1);
+		    var date2 = new Date(stamp2 * 1000);
+
+		    if(date1.getYear() == date2.getYear()){
+		    	if(date1.getMonth() == date2.getMonth() && date1.getDate() - date2.getDate() == 1){
+		    		return date1.getHours() + 24 - date2.getHours() + " hours ago";
+			    }
+			    else if(date1.getMonth() == date2.getMonth() && date1.getDate() - date2.getDate() == 0){
+			    	if(date1.getHours() == date2.getHours()){
+			    		return date1.getMinutes() - date2.getMinutes() + " minutes ago";
+			    	}else{
+			    		return date1.getHours() - date2.getHours() + " hours ago";
+			    	}
+			    }
+			    else{
+			    	return date2.getDate() + " " + months[date2.getMonth()];
+			    }
+		    }
+		    else{
+		    	return date2.getFullYear() + " " + date2.getDate() +" " + months[date2.getMonth()];
+		    }
+		};
 
 		/**
 		 =============================================================================
