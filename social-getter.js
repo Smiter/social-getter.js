@@ -57,6 +57,9 @@
 								'</li>' +
 							'</ul>' +
 						'</div>' +
+						'<div id="loading-holder">' +
+						'<img src="http://d36hc0p18k1aoc.cloudfront.net/public/i/loading.gif" />'+
+						'</div>' +
 						'<div id="posts_holder">' +
 						'</div>' +
 					'</div>',
@@ -108,6 +111,8 @@
 
 		var menuClickHandlers = function(){
 			$(that).on("click", ".collections-nav-ul li", function(){
+				$("#loading-holder").show();
+				$("#posts_holder").hide();
 				$("#posts_holder").empty();
 				social.scrollHandler.isHandlerOn = true;
 				social.scrollHandler.scrollTop = $(window).scrollTop();
@@ -152,6 +157,7 @@
 
 				var i = 0;
 				function setPostPositions(){
+					$("#loading-holder").hide();
 					var postElements = $("#posts_holder .post");
 					data.forEach(function(element, index, array){
 						var curr_post = $("#posts_holder ." + array[index]._id);
@@ -166,8 +172,8 @@
 							curr_post.css("left", left_array[i]+"px");
 							if(++i == left_array.length)
 								i = 0;
-						}
-						
+					}
+					$("#posts_holder").show();
 					});
 					if(callback && typeof callback === 'function')
 						callback();
@@ -227,8 +233,11 @@
 		    var date2 = new Date(stamp2 * 1000);
 
 		    if(date1.getYear() == date2.getYear()){
-		    	if(date1.getMonth() == date2.getMonth() && date1.getDate() - date2.getDate() == 1){
-		    		return date1.getHours() + 24 - date2.getHours() + " hours ago";
+		    	if(date1.getMonth() == date2.getMonth() && date1.getDate() - date2.getDate() == 0){
+		    		return date1.getHours() - date2.getHours() - 1  + " hours ago";
+			    }
+			    else if(date1.getMonth() == date2.getMonth() && date1.getDate() - date2.getDate() == 1){
+		    		return date1.getHours() + 23 - date2.getHours() + " hours ago";
 			    }
 			    else if(date1.getMonth() == date2.getMonth() && date1.getDate() - date2.getDate() == 0){
 			    	if(date1.getHours() == date2.getHours()){

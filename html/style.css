@@ -15,6 +15,7 @@
 	display: block;
 	position: relative;
 	height: 100%;
+	display: none;
 }
 
 #posts_holder .post-content{
@@ -220,6 +221,19 @@ li [class^="icon-"], li [class*=" icon-"] {
 	color: white;
 	font-size: 18px;
 	line-height: 1.5;
+}
+
+#loading-holder{
+	width: 100%;
+	text-align: center;
+	margin-top: 100px;
+}
+
+#loading-holder img {
+	height: auto;
+	max-width: 100%;
+	vertical-align: middle;
+	border: 0;
 }
 
 @font-face{

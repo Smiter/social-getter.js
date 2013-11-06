@@ -160,7 +160,7 @@ function parseFbBodyAndSave2Db(options, body, callback){
         var next_url = body.paging.next;
     body.data.forEach(function(element, index, array){
         var post = {};
-        if(element.picture != undefined && element.picture != null){
+        if(element.picture != undefined && element.picture != null && element.message != null){
             post["user"] = options.id;
             post["social_name"] = "facebook";
             if(element.object_id)
