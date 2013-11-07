@@ -141,7 +141,7 @@
 					documentElementHeight = $(that)[0].scrollHeight;
 				}
 				if(isHandlerOn && documentElementHeight - $(scrollElement).scrollTop() - 
-					$(scrollElement).height() - 500 <= 0 && scrollTop < $(scrollElement).scrollTop()){
+					$(scrollElement).height() - 650 <= 0 && scrollTop < $(scrollElement).scrollTop()){
 					isHandlerOn = false;
 					offset = offset + 20;
 					renderPosts(url+"?offset=" + offset, offset, function(){
@@ -244,10 +244,13 @@
 
 		    if(date1.getYear() == date2.getYear()){
 		    	if(date1.getMonth() == date2.getMonth() && date1.getDate() - date2.getDate() == 0){
-		    		return date1.getHours() - date2.getHours() - 1  + " hours ago";
+		    		return date1.getHours() - date2.getHours() + " hours ago";
 			    }
 			    else if(date1.getMonth() == date2.getMonth() && date1.getDate() - date2.getDate() == 1){
-		    		return date1.getHours() + 23 - date2.getHours() + " hours ago";
+			    	if(date1.getHours() + 23 - date2.getHours() > 24)
+			    		return date2.getDate() + " " + months[date2.getMonth()];
+			    	else
+		    			return date1.getHours() + 23 - date2.getHours() - 1 + " hours ago";
 			    }
 			    else if(date1.getMonth() == date2.getMonth() && date1.getDate() - date2.getDate() == 0){
 			    	if(date1.getHours() == date2.getHours()){
