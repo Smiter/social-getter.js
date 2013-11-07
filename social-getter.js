@@ -26,6 +26,7 @@
 				user: $(that).attr('data-user'),
 				social_name: $(that).attr('data-social-name'),
 				columns: $(that).attr('data-columns'),
+				expand: $(that).attr('data-expand'),
 				width: $(that).css('width'),
 				height: $(that).css('height'),
 				column_paddings_l_r: 40,
@@ -129,9 +130,20 @@
 			this.offset = 0;
 			this.scrollTop = $(window).scrollTop();
 			this.url = social.settings.user;
-			$(window).on('scroll', function(){
-				if(isHandlerOn && $(document).height() - $(window).scrollTop() - 
-					$(window).height() - 400 <= 0 && scrollTop < $(window).scrollTop()){
+			var scrollElement = window;
+			if(social.settings.expand == "false"){
+					scrollElement = that;
+					console.log(social.settings.expand);
+			}	
+			$(scrollElement).on('scroll', function(){
+				var documentElementHeight = $(document).height();
+				console.log(social.settings.expand);
+				if(social.settings.expand == "false"){
+					console.log($(that)[0].scrollHeight);
+					documentElementHeight = $(that)[0].scrollHeight;
+				}
+				if(isHandlerOn && documentElementHeight - $(scrollElement).scrollTop() - 
+					$(scrollElement).height() - 500 <= 0 && scrollTop < $(scrollElement).scrollTop()){
 					isHandlerOn = false;
 					offset = offset + 20;
 					renderPosts(url+"?offset=" + offset, offset, function(){
