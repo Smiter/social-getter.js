@@ -27,7 +27,7 @@
 				social_name: $(that).attr('data-social-name'),
 				columns: $(that).attr('data-columns'),
 				expand: $(that).attr('data-expand'),
-				width: $(that).css('width'),
+				width: $(that).width(),
 				height: $(that).css('height'),
 				column_paddings_l_r: 40,
 				column_paddings_t_b: 20,
@@ -133,13 +133,11 @@
 			var scrollElement = window;
 			if(social.settings.expand == "false"){
 					scrollElement = that;
-					console.log(social.settings.expand);
 			}	
 			$(scrollElement).on('scroll', function(){
 				var documentElementHeight = $(document).height();
 				console.log(social.settings.expand);
 				if(social.settings.expand == "false"){
-					console.log($(that)[0].scrollHeight);
 					documentElementHeight = $(that)[0].scrollHeight;
 				}
 				if(isHandlerOn && documentElementHeight - $(scrollElement).scrollTop() - 

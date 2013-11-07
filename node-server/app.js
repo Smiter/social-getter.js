@@ -60,7 +60,7 @@ function addPostsToDataBase(handler, options){
                 query["social_name"] = options.social_name;
                 if(!err){
                     conn.collection('posts').find(query).count(function(err, count){
-                            if(count >= options.number_posts){
+                            if(count >= options.number_posts-10){
                                 if(options.number_posts == 20){
                                     var options_query = {};
                                     options_query["limit"] = 20;
@@ -75,7 +75,7 @@ function addPostsToDataBase(handler, options){
                                 }
                             }else{
                                 if ((options.next_url != undefined) && (options.next_url != null)){
-                                    handler(options);
+                                    handler(options, options.callback);
                                 }
                             }
                     });
@@ -223,26 +223,30 @@ function parseInstBodyAndSave2Db(options, body, callback){
     var posts = [];
     if ((body.pagination != undefined) && (body.pagination !== null))
         var next_url = body.pagination.next_url;
-    body.data.forEach(function(element, index, array){
-        var post = {};
-        post["user"] = options.id;
-        post["social_name"] = "instagram";
-        post["image"] = element.images.standard_resolution.url;
-        if(element.caption)
-            post["text"] = element.caption.text;
-        post["_id"] = element.id;
-        post["timestamp"] = parseInt(element.created_time);
-        post["author"] = element.user.username;
-        post["author_link"] = "http://instagram.com/"+options.id
-        post["link"] = element.link;
-        post["avatar"] = element.user.profile_picture;
-        posts.push(post);
-    });
-    options["next_url"] = next_url;
-    options["callback"] = callback;
-    options["posts"] = posts;
-    options["social_name"] = "instagram";
-    addPostsToDataBase(getInstagramFeed, options);
+    if(body.data.length > 0){
+        body.data.forEach(function(element, index, array){
+            var post = {};
+            post["user"] = options.id;
+            post["social_name"] = "instagram";
+            post["image"] = element.images.standard_resolution.url;
+            if(element.caption)
+                post["text"] = element.caption.text;
+            post["_id"] = element.id;
+            post["timestamp"] = parseInt(element.created_time);
+            post["author"] = element.user.username;
+            post["author_link"] = "http://instagram.com/"+options.id
+            post["link"] = element.link;
+            post["avatar"] = element.user.profile_picture;
+            posts.push(post);
+        });
+        options["next_url"] = next_url;
+        options["callback"] = callback;
+        options["posts"] = posts;
+        options["social_name"] = "instagram";
+        addPostsToDataBase(getInstagramFeed, options);
+    }else{
+        log.warn(body)
+    }
 }
 
 function getInstagramFeed(options, callback){
