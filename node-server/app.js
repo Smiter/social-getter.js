@@ -158,31 +158,33 @@ function parseFbBodyAndSave2Db(options, body, callback){
     var posts = Array();
     if ((body.paging != undefined) && (body.paging !== null))
         var next_url = body.paging.next;
-    body.data.forEach(function(element, index, array){
-        var post = {};
-        if(element.picture != undefined && element.picture != null && element.message != null){
-            post["user"] = options.id;
-            post["social_name"] = "facebook";
-            if(element.object_id)
-                post["image"] = "https://graph.facebook.com/"+element.object_id+"/picture";
-            else
-                post["image"] = element.picture;
-            post["_id"] = element.id;
-            post["text"] = element.message;
-            post["timestamp"] = element.created_time;
-            post["author"] = element.from.name;
-            post["author_link"] = "http://facebook.com/"+options.id
-            post["link"] = element.link;
-            post["avatar"] = "https://graph.facebook.com/"+element.from.id+"/picture";
-            posts.push(post);
-        }
-    });
+    if(body.data){
+        body.data.forEach(function(element, index, array){
+            var post = {};
+            if(element.picture != undefined && element.picture != null && element.message != null){
+                post["user"] = options.id;
+                post["social_name"] = "facebook";
+                if(element.object_id)
+                    post["image"] = "https://graph.facebook.com/"+element.object_id+"/picture";
+                else
+                    post["image"] = element.picture;
+                post["_id"] = element.id;
+                post["text"] = element.message;
+                post["timestamp"] = element.created_time;
+                post["author"] = element.from.name;
+                post["author_link"] = "http://facebook.com/"+options.id
+                post["link"] = element.link;
+                post["avatar"] = "https://graph.facebook.com/"+element.from.id+"/picture";
+                posts.push(post);
+            }
+        });
 
-    options["next_url"] = next_url;
-    options["callback"] = callback;
-    options["posts"] = posts;
-    options["social_name"] = "facebook";
-    addPostsToDataBase(getFacebookFeed, options);
+        options["next_url"] = next_url;
+        options["callback"] = callback;
+        options["posts"] = posts;
+        options["social_name"] = "facebook";
+        addPostsToDataBase(getFacebookFeed, options);
+    }
 }
 
 function getFacebookFeed(options, callback){
@@ -223,7 +225,7 @@ function parseInstBodyAndSave2Db(options, body, callback){
     var posts = [];
     if ((body.pagination != undefined) && (body.pagination !== null))
         var next_url = body.pagination.next_url;
-    if(body.data.length > 0){
+    if(body.data){
         body.data.forEach(function(element, index, array){
             var post = {};
             post["user"] = options.id;

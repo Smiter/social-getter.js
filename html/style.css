@@ -37,8 +37,6 @@
 	left: 0px;
 	top: 0px;
 	height: 100%;
-	margin-top: 20px;
-	margin-left: 20px;
 	height: auto;
 }
 
@@ -81,6 +79,7 @@
 	-o-transition: color 0.2s ease-in;
 	transition: color 0.2s ease-in;
 	font-style: normal;
+	font-size: 25px;
 }
 
 #posts_holder .post-timestamp{
@@ -129,7 +128,7 @@
 	z-index: 9;
 	top: 0;
 	display: block;
-	padding-top: 42px;
+	padding-top: 60px;
 	width: 100%;
 }
 

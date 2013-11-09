@@ -29,7 +29,7 @@
 				expand: $(that).attr('data-expand'),
 				width: $(that).width(),
 				height: $(that).css('height'),
-				column_paddings_l_r: 40,
+				column_paddings_l_r: 20,
 				column_paddings_t_b: 20,
 				api_url: 'http://127.0.0.1:3000/api/'
 			}
@@ -109,9 +109,9 @@
 		  return getPostedTime(new Date().getTime(), timestamp);
 		});
 
-
 		var menuClickHandlers = function(){
-			$(that).on("click", ".collections-nav-ul li", function(){
+			$(that).on("click touchstart", ".collections-nav-ul li", function(event){
+				event.preventDefault();
 				$("#loading-holder").show();
 				$("#posts_holder").hide();
 				$("#posts_holder").empty();
@@ -132,13 +132,13 @@
 			this.url = social.settings.user;
 			var scrollElement = window;
 			if(social.settings.expand == "false"){
-					scrollElement = that;
+				scrollElement = $("#posts_holder");
+				$("#posts_holder").niceScroll({autohidemode:false, cursorwidth: 7});
 			}	
 			$(scrollElement).on('scroll', function(){
 				var documentElementHeight = $(document).height();
-				console.log(social.settings.expand);
 				if(social.settings.expand == "false"){
-					documentElementHeight = $(that)[0].scrollHeight;
+					documentElementHeight = scrollElement[0].scrollHeight;
 				}
 				if(isHandlerOn && documentElementHeight - $(scrollElement).scrollTop() - 
 					$(scrollElement).height() - 650 <= 0 && scrollTop < $(scrollElement).scrollTop()){
@@ -146,6 +146,7 @@
 					offset = offset + 20;
 					renderPosts(url+"?offset=" + offset, offset, function(){
 						isHandlerOn = true;
+						$("#posts_holder").getNiceScroll().resize();
 					});
 				}
 				scrollTop = $(window).scrollTop();
@@ -162,7 +163,7 @@
 
 				var left_array = [];
 				for(var i = 0; i < social.settings.columns; i ++){
-					left_array[i] = i * (social.settings.column_width - social.settings.column_paddings_t_b);
+					left_array[i] = i * (social.settings.column_width);
 				}
 
 				var i = 0;
@@ -173,20 +174,42 @@
 						var curr_post = $("#posts_holder ." + array[index]._id);
 						if(index + offset - social.settings.columns >= 0){
 							var html_prev_post = postElements[index + offset  - social.settings.columns];
-							var top = $(html_prev_post).position().top +	$(html_prev_post).height() + social.settings.column_paddings_t_b;
+							var top = parseInt($(html_prev_post).css('top'), 10)  +	$(html_prev_post).height() + social.settings.column_paddings_t_b;
 							curr_post.css("top", top +"px");
 						}
 						if(offset>0){
-							curr_post.css("left", $(html_prev_post).position().left+"px");
+							curr_post.css("left", $(html_prev_post).position().left + "px");
 						}else{
 							curr_post.css("left", left_array[i]+"px");
 							if(++i == left_array.length)
 								i = 0;
-					}
-					$("#posts_holder").show();
+						}
+						$("#posts_holder").show();
 					});
 					if(callback && typeof callback === 'function')
 						callback();
+				}
+
+				function makeFirstLineUpperCase(){
+					$("#posts_holder").show();
+					var text_height = Number.MAX_VALUE;
+					var text_entities = $("#posts_holder .post-title a");
+					for(var i = offset; i < text_entities.length; i ++){
+						var entity = $(text_entities[i]);
+						var curr_text = entity.text();
+						var text_split = curr_text.split(" ");
+						entity.empty();
+						for(var j=0; j< text_split.length; j++){
+							var txt_temp = entity.text();
+							entity.text(txt_temp + " " + text_split[j]);
+							if(text_height < entity.height()){
+								entity.text(txt_temp);
+								entity.append("<br/><span style='font-size: 15px'> " +  curr_text.replace(txt_temp.trim(),"")  +  "</span>");
+								break;
+							}
+							text_height = entity.height();
+						}
+					}
 				}
 				function checkIfImagesLoaded(callback){
 					setTimeout(function(){
@@ -199,6 +222,8 @@
 						});
 						if(!isHeightZero){
 							checkIfImagesLoaded(function(){
+								$("#posts_holder").show();
+								makeFirstLineUpperCase();
 								setPostPositions();
 							});
 						}else{
@@ -208,6 +233,7 @@
 				}
 
 				checkIfImagesLoaded(function(){
+					makeFirstLineUpperCase();
 					setPostPositions();
 				});
 				
