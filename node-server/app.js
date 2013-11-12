@@ -80,7 +80,7 @@ function addPostsToDataBase(handler, options){
                             }
                     });
                 }else{
-                    log.error(err);
+                    log.error("error during insert: " + err);
                 }
         });
     });
@@ -112,31 +112,33 @@ function getTwitterFeed(options, callback){
 
     helper.sendRequest(twitter_params, function (err, response, body){
         var posts = Array();
-
+        
         body.forEach(function(element, index, array){
             if (!skip_tweet_with_max_id || element.id_str != options.next_url){
-
+                var post = {};
+                post["user"] = options.id;
+                post["social_name"] = "twitter";
+                post["_id"] = element.id_str;
+                post["timestamp"] = Math.round((new Date(element.created_at).getTime())/1000);
+                post["text"] = element.text;
+                //if we grab text posts then we should retrieve element.entities.urls - Array of urls inside the post
+                post["author"] = element.user.name;
+                post["author_link"] = "http://twitter.com/"+options.id
+                post["author_nickname"] = element.user.screen_name
+                post["avatar"] = element.user.profile_image_url;
+                if(element.entities.urls && element.entities.urls.length > 0)
+                    post["link"] = element.entities.urls[0].url;
                 var media = element.entities.media;
                 if(media != undefined && media != null && media.length > 0){
                     media.forEach(function(image_element, index, array){
-
-                        var post = {};
-                        post["user"] = options.id;
-                        post["social_name"] = "twitter";
-                        post["element_id"] = element.id_str;
-                        post["_id"] = image_element.id_str;
                         post["image"] = image_element.media_url;
-                        post["timestamp"] = Math.round((new Date(element.created_at).getTime())/1000);
-                        post["text"] = element.text;
-                        //if we grab text posts then we should retrieve element.entities.urls - Array of urls inside the post
                         post["link"] = image_element.url;
-                        post["author"] = element.user.name;
-                        post["author_link"] = "http://twitter.com/"+options.id
-                        post["author_nickname"] = element.user.screen_name
-                        post["avatar"] = element.user.profile_image_url;
-                        posts.push(post)
                     })
                 }
+                if(!post["link"]){
+                    post["link"] = "https://twitter.com/" + options.id + "/status/" + element.id_str;
+                }
+                posts.push(post);
             }
         });
 
@@ -172,8 +174,12 @@ function parseFbBodyAndSave2Db(options, body, callback){
                 post["text"] = element.message;
                 post["timestamp"] = element.created_time;
                 post["author"] = element.from.name;
-                post["author_link"] = "http://facebook.com/"+options.id
+                post["author_link"] = "http://facebook.com/"+options.id;
                 post["link"] = element.link;
+                var urlRegex = /(https?:\/\/[^\s]+)/g;
+                var url = element.message.match(urlRegex);
+                if(url && url != "")
+                    post["link"] = url;
                 post["avatar"] = "https://graph.facebook.com/"+element.from.id+"/picture";
                 posts.push(post);
             }
@@ -293,7 +299,7 @@ function getInstagramFeed(options, callback){
 }
 
 new cronJob({
-    cronTime: '0,15,30,45 * * * *', //every 15 minutes
+    cronTime: '0 * * * *', //every 15 minutes
     onTick: function() {
         db.connect(function(conn){
             var grouping = {
@@ -401,7 +407,14 @@ app.get('/api/:social_name/:id', function(req, res){
                 options["sort"] =  [["timestamp","desc"]];
                 if (req.query.offset){
                     options["skip"] = req.query.offset;
-                    getNextFeed(id, social_name, req.query.offset, conn);
+                    conn.collection('posts').find(query).count(function(err, count){
+                        if(!err){
+                            if(count <= parseInt(req.query.offset) + 40)
+                                getNextFeed(id, social_name, req.query.offset, conn);
+                        }else{
+                            log.error(err);
+                        }
+                    });
                 }
                 conn.collection("posts").find(query, {}, options).toArray(function(err, items){
                     res.send(items);
@@ -420,9 +433,9 @@ function getNextFeed(id, social_name, offset, conn){
     };
     var urls_query = {}
     urls_query["_id"] = id+social_name;
-    conn.collection("nexturls").findOne(urls_query, function(err, post){
-        if(post != null && post.offset < parseInt(offset) + 40){
-            options.next_url = post.next_url;
+    conn.collection("nexturls").findOne(urls_query, function(err, url){
+        if(url != null && url.offset < parseInt(offset) + 40){
+            options.next_url = url.next_url;
             switch(social_name){
                 case 'facebook':
                     getFacebookFeed(options);
@@ -451,8 +464,8 @@ app.get('/api/:id', function(req, res){
 
 
                 function checkIfPulledAndSend(){
-                    if(fb_posts && instagram_posts){
-                        var posts = fb_posts.concat(instagram_posts);
+                    if(fb_posts && instagram_posts && twitter_posts){
+                        var posts = fb_posts.concat(instagram_posts, twitter_posts);
                         posts.sort(function(x, y){
                             return y.timestamp - x.timestamp;
                         })
@@ -460,12 +473,11 @@ app.get('/api/:id', function(req, res){
                     }
                 }
 
-                //takes too long for twitter if account has too small amount of images
-                // temporary disable until come up with some ideas
-                // getTwitterFeed(id, null, false, function(posts){
-                //     twitter_posts = posts;
-                //     checkIfPulledAndSend();
-                // });
+                fetchPostsWhenCollectionEmpty(getTwitterFeed, id, "twitter", function(posts){
+                    twitter_posts = posts;
+                    checkIfPulledAndSend();
+                });
+
                 fetchPostsWhenCollectionEmpty(getInstagramFeed, id, "instagram", function(posts){
                     instagram_posts = posts;
                     checkIfPulledAndSend();

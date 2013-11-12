@@ -16,6 +16,7 @@
 	position: relative;
 	height: 100%;
 	display: none;
+	margin-left: 15px;
 }
 
 #posts_holder .post-content{
@@ -38,6 +39,8 @@
 	top: 0px;
 	height: 100%;
 	height: auto;
+	margin-top: 2px;
+	margin-left: 2px;
 }
 
 #posts_holder .post img{
@@ -233,6 +236,26 @@ li [class^="icon-"], li [class*=" icon-"] {
 	max-width: 100%;
 	vertical-align: middle;
 	border: 0;
+}
+
+.post-icon{
+	display: block;
+	text-align: center;
+	padding-top: 13px;
+	font-size: 21px;
+	color: #95bcb8;
+}
+
+.post-icon i{
+	display: inline-block;
+}
+
+.icon-twitter:before {
+	content: "\f099";
+}
+
+.icon-facebook{
+
 }
 
 @font-face{

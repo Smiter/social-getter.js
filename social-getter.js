@@ -70,9 +70,13 @@
 							'<div class="post {{_id}}" style="width: {{../column_width}}px; left: 0px; top: 0px">' +
 								'<div class="post-holder">' +
 									'<div class="post-content">' +
+										'{{#unless image}}<div class="post-icon">' +
+										    '<i class="icon-twitter"></i>' + 
+										    '<i class="icon-facebook"></i>' +
+										'</div>{{/unless}}' +
 										'<a href="{{link}}" target="_blank">' +
 											'<div>' +
-												  '<img src="{{image}}" />' +
+												  '{{#if image}}<img src="{{image}}" />{{/if}}' +
 											'</div>' + 
 										'</a>' +
 										'<div class="post-text">'+
@@ -97,7 +101,11 @@
 							'</div>' +
 						'{{/each}}'
 			}
-
+			var min_by_column = Array();
+			for(var j = 0; j < social.settings.columns; j++){
+				min_by_column.push(1000000);
+			}
+			social.min_by_column = min_by_column;
 			var result = compileTemplate(social.templates.wrapper, {user: social.settings.user})
 			$(that).append(result);
 			renderPosts(social.settings.user, 0);
@@ -157,7 +165,6 @@
 		var renderPosts = function(url, offset, callback){
 
 			sendRequest(social.settings.api_url + url, function(data){
-					
 				var result = compileTemplate(social.templates.posts, {posts: data, column_width: social.settings.column_width - social.settings.column_paddings_l_r})
 				$("#posts_holder").append(result);
 
@@ -166,23 +173,20 @@
 					left_array[i] = i * (social.settings.column_width);
 				}
 
-				var i = 0;
 				function setPostPositions(){
 					$("#loading-holder").hide();
 					var postElements = $("#posts_holder .post");
 					data.forEach(function(element, index, array){
 						var curr_post = $("#posts_holder ." + array[index]._id);
 						if(index + offset - social.settings.columns >= 0){
-							var html_prev_post = postElements[index + offset  - social.settings.columns];
-							var top = parseInt($(html_prev_post).css('top'), 10)  +	$(html_prev_post).height() + social.settings.column_paddings_t_b;
-							curr_post.css("top", top +"px");
-						}
-						if(offset>0){
-							curr_post.css("left", $(html_prev_post).position().left + "px");
+							var min = findMin(social.min_by_column);
+							var minIdx = findMinIdx(social.min_by_column);
+							curr_post.css("top", min +  social.settings.column_paddings_t_b +"px");
+							social.min_by_column[minIdx] = parseInt($(curr_post).css('top'), 10)  +	$(curr_post).height();
+							curr_post.css("left", left_array[minIdx]+"px");
 						}else{
-							curr_post.css("left", left_array[i]+"px");
-							if(++i == left_array.length)
-								i = 0;
+							social.min_by_column[index] = parseInt($(curr_post).css('top'), 10)  +	$(curr_post).height();
+							curr_post.css("left", left_array[index]+"px");
 						}
 						$("#posts_holder").show();
 					});
@@ -260,6 +264,14 @@
 		    })
 		    .always(function(data) {
 		    });
+		}
+
+		function findMin(arr){
+			return Math.min.apply(Math, arr);
+		}
+
+		function findMinIdx(arr){
+			return arr.indexOf(Math.min.apply(this,arr));
 		}
 
 		var months = Array('Jan','Feb','Mar','Apr','May', 'June','July','Aug','Sept','Oct','Nov','Dec');
