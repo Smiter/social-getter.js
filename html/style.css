@@ -1,3 +1,6 @@
+.social-getter{
+	padding-right: 25px;
+}
 #holder{
 	width: 100%;
 	position: relative;
@@ -83,6 +86,7 @@
 	transition: color 0.2s ease-in;
 	font-style: normal;
 	font-size: 25px;
+	word-wrap: break-word;
 }
 
 #posts_holder .post-timestamp{

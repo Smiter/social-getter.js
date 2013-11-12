@@ -7,6 +7,8 @@ var app = express();
 var db = require('./libs/db');
 var cronJob = require('cron').CronJob;
 
+var INTERNAL_ERROR = "Internal server error";
+
 app.configure(function() {
   app.use(express.cookieParser());
   app.use(express.multipart());
@@ -22,19 +24,20 @@ app.configure(function() {
   });
 });
 
-function isCollectionEmpty(social_name, id, callback){
-    if(!callback || typeof callback !== 'function')
-        throw new Error("please provide callback");
+function isCollectionEmpty(social_name, hubname, callback){
+    if(!callback || typeof callback !== 'function'){
+        log.error("please provide callback");
+        callback(INTERNAL_ERROR, null);
+    }
     if(social_name && helper.social_media.indexOf(social_name) < 0){
-        throw new Error(social_name + " social media is not supported");
+        callback(social_name + " social media is not supported", null);
     }
     db.connect(function(conn){
         var query = {}
-        query["user"] = id;
         if(social_name)
             query["social_name"] = social_name;
-        conn.collection("posts").findOne(query, function(err, first_post){
-            callback(first_post===null);
+        conn.collection(hubname).findOne(query, function(err, first_post){
+            callback(null, first_post===null);
         });
     });
 }
@@ -53,18 +56,18 @@ function addPostsToDataBase(handler, options){
                 }
             });
         }
-        
-        conn.collection('posts').insert(options.posts, {continueOnError: true}, function(err, res){
+        log.info("addPostsToDataBase: before insert to database: "+options.hubname + " social: " + options.social_name)
+        conn.collection(options.hubname).insert(options.posts, {continueOnError: true}, function(err, res){
                 var query = {}
                 query["user"] = options.id;
                 query["social_name"] = options.social_name;
                 if(!err){
-                    conn.collection('posts').find(query).count(function(err, count){
+                    conn.collection(options.hubname).find(query).count(function(err, count){
                             if(count >= options.number_posts-10){
                                 if(options.number_posts == 20){
                                     var options_query = {};
                                     options_query["limit"] = 20;
-                                    conn.collection('posts').find(query, {}, options_query).toArray(function(err, posts){
+                                    conn.collection(options.hubname).find(query, {}, options_query).toArray(function(err, posts){
                                         if(!err){
                                             if(options.callback && typeof options.callback === 'function')
                                                 options.callback(posts);
@@ -302,44 +305,49 @@ new cronJob({
     cronTime: '0 * * * *', //every 15 minutes
     onTick: function() {
         db.connect(function(conn){
-            var grouping = {
-                $group: {
-                    _id: {
-                        user: "$user",
-                        social_name: "$social_name"
-                    }
-                }
-            };
-            conn.collection("posts").aggregate(grouping, function(err, res){
-                if (res != null){
-                    res.forEach(function(pair, index, array){
-                        var user = pair._id.user;
-                        var social_name = pair._id.social_name;
-                        var options = {
-                            id: user,
-                            next_url: null,
-                            social_name: social_name,
-                            write_next_url: false,
-                            number_posts: Number.MAX_VALUE
-                        };
-                        switch(social_name){
-                            case "twitter":
-                                getTwitterFeed(options, function(posts){
-                                    console.log("Twitter data was updated.");
-                                });
-                                break;
+            conn.collection("hubs").find({}).toArray(function(err, hubs){
+                if(hubs){
+                    hubs.forEach(function(element, index, array){
+                        if(element["facebook"]){
+                            var options = {
+                                id: element["facebook"],
+                                next_url: null,
+                                social_name: "facebook",
+                                hubname: element["hubname"],
+                                write_next_url: false,
+                                number_posts: Number.MAX_VALUE
+                            };
+                            getFacebookFeed(options, function(posts){
+                                console.log("Facebook data was updated.");
+                            });
+                        }
 
-                            case "facebook":
-                                getFacebookFeed(options, function(posts){
-                                    console.log("Facebook data was updated.");
-                                });
-                                break;
+                        if(element["twitter"]){
+                           var options = {
+                                id: element["twitter"],
+                                next_url: null,
+                                social_name: "twitter",
+                                hubname: element["hubname"],
+                                write_next_url: false,
+                                number_posts: Number.MAX_VALUE
+                            };
+                            getTwitterFeed(options, function(posts){
+                                console.log("Twitter data was updated.");
+                            });
+                        }
 
-                            case "instagram":
-                                getInstagramFeed(options, function(posts){
-                                    console.log("Instagram data was updated.");
-                                });
-                                break;
+                        if(element["instagram"]){
+                           var options = {
+                                id: element["instagram"],
+                                next_url: null,
+                                social_name: "instagram",
+                                hubname: element["hubname"],
+                                write_next_url: false,
+                                number_posts: Number.MAX_VALUE
+                            };
+                            getInstagramFeed(options, function(posts){
+                                console.log("Instagram data was updated.");
+                            });
                         }
                     });
                 }
@@ -352,10 +360,11 @@ new cronJob({
 
 //fetch posts when first visit ( collection is empty )
 // we decided to pull first 40
-function fetchPostsWhenCollectionEmpty(handler, id, social_name, callback){
+function fetchPostsWhenCollectionEmpty(handler, hubname, id, social_name, callback){
     var options = {id: id, next_url:null, write_next_url: true, number_posts: 20}
     options["id"] = id;
     options["social_name"] = social_name;
+    options["hubname"] = hubname;
     handler(options, function(posts){
         callback(posts);
         db.connect(function(conn){
@@ -373,61 +382,97 @@ function fetchPostsWhenCollectionEmpty(handler, id, social_name, callback){
     });
 }
 
-app.get('/api/:social_name/:id', function(req, res){
-    var id = req.params.id;
-    var social_name = req.params.social_name;
-    isCollectionEmpty(social_name, id, function(isEmpty){
-        if(isEmpty){
-            switch(social_name){
-                case "twitter":
-                    fetchPostsWhenCollectionEmpty(getTwitterFeed, id, social_name, function(posts){
-                        res.send(posts);
-                    });
-                    break;
-
-                case "facebook":
-                    fetchPostsWhenCollectionEmpty(getFacebookFeed, id, social_name, function(posts){
-                        res.send(posts);
-                    });
-                    break;
-
-                case "instagram":
-                    fetchPostsWhenCollectionEmpty(getInstagramFeed, id, social_name, function(posts){
-                        res.send(posts);
-                    });
-                    break;
+function getSocialIdHab(hubname, callback){
+    db.connect(function(conn){
+        var query = {};
+        query["hubname"] = hubname;
+        conn.collection('hubs').findOne(query, function(err, hub){
+            if(!err){
+                callback(null, hub);
             }
-        }else{
-            db.connect(function(conn){
-                var query = {}
-                query["user"] = id;
-                query["social_name"] = social_name;
-                var options = {};
-                options["limit"] = 20;
-                options["sort"] =  [["timestamp","desc"]];
-                if (req.query.offset){
-                    options["skip"] = req.query.offset;
-                    conn.collection('posts').find(query).count(function(err, count){
-                        if(!err){
-                            if(count <= parseInt(req.query.offset) + 40)
-                                getNextFeed(id, social_name, req.query.offset, conn);
-                        }else{
-                            log.error(err);
-                        }
-                    });
-                }
-                conn.collection("posts").find(query, {}, options).toArray(function(err, items){
-                    res.send(items);
-                });
-            });
+            else
+                callback("getSocialIdHab: hubname - " + hubname + ", error - " + err, null);
+        });
+    });
+}
+
+
+app.get('/api/:hubname/:social_name', function(req, res, next){
+    var hubname = req.params.hubname;
+    var social_name = req.params.social_name;
+    getSocialIdHab(hubname, function(err, hub){
+        if(err){
+            next(new Error(err));
+            return;
         }
+        if(!hub){
+            next(new Error(hubname + " doesn't exist"));
+            return;
+        }
+        if(hub && hub[social_name] != null && hub[social_name] != undefined)
+            var id = hub[social_name];
+        else{
+            next(new Error(hubname + " HUB does not have " + social_name + " account"));
+            return;
+        }
+            
+        isCollectionEmpty(social_name, hub["hubname"], function(err, isEmpty){
+            if(err){
+                next(new Error(err));
+                return;
+            }
+            if(isEmpty){
+                switch(social_name){
+                    case "twitter":
+                        fetchPostsWhenCollectionEmpty(getTwitterFeed, hub["hubname"], id, social_name, function(posts){
+                            res.send(posts);
+                        });
+                        break;
+
+                    case "facebook":
+                        fetchPostsWhenCollectionEmpty(getFacebookFeed, hub["hubname"], id, social_name, function(posts){
+                            res.send(posts);
+                        });
+                        break;
+
+                    case "instagram":
+                        fetchPostsWhenCollectionEmpty(getInstagramFeed, hub["hubname"], id, social_name, function(posts){
+                            res.send(posts);
+                        });
+                        break;
+                }
+            }else{
+                db.connect(function(conn){
+                    var query = {}
+                    query["social_name"] = social_name;
+                    var options = {};
+                    options["limit"] = 20;
+                    options["sort"] =  [["timestamp","desc"]];
+                    if (req.query.offset){
+                        options["skip"] = req.query.offset;
+                        conn.collection(hub["hubname"]).find(query).count(function(err, count){
+                            if(!err){
+                                if(count <= parseInt(req.query.offset) + 40)
+                                    getNextFeed(hub["hubname"], id, social_name, req.query.offset, conn);
+                            }else{
+                                log.error(err);
+                            }
+                        });
+                    }
+                    conn.collection(hub["hubname"]).find(query, {}, options).toArray(function(err, items){
+                        res.send(items);
+                    });
+                });
+            }
+        });
     });
 });
 
 
-function getNextFeed(id, social_name, offset, conn){
+function getNextFeed(hubname, id, social_name, offset, conn){
     var options = {
         id: id,
+        hubname: hubname,
         write_next_url: true,
         number_posts: parseInt(offset)+40
     };
@@ -452,56 +497,149 @@ function getNextFeed(id, social_name, offset, conn){
 }
 
 
-app.get('/api/:id', function(req, res){
-    var id = req.params.id;
-    var social_name = req.params.social_name;
-    isCollectionEmpty(null, id, function(isEmpty){
-        if(isEmpty){
+app.get('/api/:hubname', function(req, res, next){
+    var hubname = req.params.hubname;
+    getSocialIdHab(hubname, function(err, hub){
+        if(err){
+            next(new Error(err));
+            return;
+        }
+        if(!hub){
+            next(new Error(hubname + " doesn't exist"));
+            return;
+        }
 
-                var twitter_posts = null;
-                var fb_posts = null;
-                var instagram_posts = null;
+        var twitter_posts = null;
+        var fb_posts = null;
+        var instagram_posts = null;
 
-
-                function checkIfPulledAndSend(){
-                    if(fb_posts && instagram_posts && twitter_posts){
-                        var posts = fb_posts.concat(instagram_posts, twitter_posts);
-                        posts.sort(function(x, y){
-                            return y.timestamp - x.timestamp;
-                        })
-                        res.send(posts.slice(0,20));
-                    }
+        function removeDuplicates(posts){
+            var newarr = [];
+            var unique = {};
+             
+            posts.forEach(function(element, index, array) {
+                if (!unique[element._id+element.social_name]) {
+                    newarr.push(element);
+                    unique[element._id+element.social_name] = element;
                 }
-
-                fetchPostsWhenCollectionEmpty(getTwitterFeed, id, "twitter", function(posts){
-                    twitter_posts = posts;
-                    checkIfPulledAndSend();
-                });
-
-                fetchPostsWhenCollectionEmpty(getInstagramFeed, id, "instagram", function(posts){
-                    instagram_posts = posts;
-                    checkIfPulledAndSend();
-                });
-
-                fetchPostsWhenCollectionEmpty(getFacebookFeed, id, "facebook", function(posts){
-                    fb_posts = posts;
-                    checkIfPulledAndSend();
-                });
-        }else{
-            db.connect(function(conn){
-                var query = {}
-                query["user"] = id;
-                var options = {};
-                options["limit"] = 20;
-                options["sort"] =  [["timestamp","desc"]];
-                if (req.query.offset){
-                    options["skip"] = req.query.offset;
-                    getNextFeed(id, "facebook", req.query.offset, conn);
-                    getNextFeed(id, "instagram", req.query.offset, conn);
+            });
+            return newarr;
+        }
+        function checkIfPulledAndSend(){
+            if( (fb_posts && hub["facebook"]) && (instagram_posts && hub["instagram"] ) && (twitter_posts && hub["twitter"]) ) {
+                if(fb_posts){
+                    var posts = fb_posts;
                 }
-                conn.collection("posts").find(query, {}, options).toArray(function(err, items){
-                    res.send(items);
-                });
+                if(instagram_posts){
+                    posts = posts.concat(instagram_posts);
+                }
+                if(twitter_posts){
+                    posts = posts.concat(twitter_posts);
+                }
+                posts = removeDuplicates(posts);
+                posts.sort(function(x, y){
+                    return y.timestamp - x.timestamp;
+                })
+                res.send(posts.slice(0,20));
+            }
+        }
+
+        if(hub["twitter"]){
+            id = hub["twitter"];
+            isCollectionEmpty("twitter", hub["hubname"], function(err, isEmpty){
+                if(err){
+                    next(new Error(err));
+                    return;
+                }
+                if(isEmpty){
+                    fetchPostsWhenCollectionEmpty(getTwitterFeed, hub["hubname"], id, "twitter", function(posts){
+                        twitter_posts = posts;
+                        checkIfPulledAndSend();
+                    });
+                }else{
+                    db.connect(function(conn){
+                        var query = {}
+                        query["social_name"] = "twitter";
+                        var options = {};
+                        options["limit"] = 20;
+                        options["sort"] =  [["timestamp","desc"]];
+                        if (req.query.offset){
+                            var query = {}
+                            options["skip"] = req.query.offset;
+                            getNextFeed(hub["hubname"], id, "twitter", req.query.offset, conn);
+                        }
+                        conn.collection(hub["hubname"]).find(query, {}, options).toArray(function(err, posts){
+                            twitter_posts = posts;
+                            checkIfPulledAndSend();
+                        });
+                    });
+                }
+            });
+        }
+
+        if(hub["facebook"]){
+            id = hub["facebook"];
+            isCollectionEmpty("facebook", hub["hubname"], function(err, isEmpty){
+                if(err){
+                    next(new Error(err));
+                    return;
+                }
+                if(isEmpty){
+                    fetchPostsWhenCollectionEmpty(getFacebookFeed, hub["hubname"], id, "facebook", function(posts){
+                        fb_posts = posts;
+                        checkIfPulledAndSend();
+                    });
+                }else{
+                    db.connect(function(conn){
+                        var query = {}
+                        query["social_name"] = "facebook";
+                        var options = {};
+                        options["limit"] = 20;
+                        options["sort"] =  [["timestamp","desc"]];
+                        if (req.query.offset){
+                            var query = {}
+                            options["skip"] = req.query.offset;
+                            getNextFeed(hub["hubname"], id, "facebook", req.query.offset, conn);
+                        }
+                        conn.collection(hub["hubname"]).find(query, {}, options).toArray(function(err, posts){
+                            fb_posts = posts;
+                            checkIfPulledAndSend();
+                        });
+                    });
+                }
+            });
+        }
+
+        if(hub["instagram"]){
+            id = hub["instagram"];
+            isCollectionEmpty("instagram", hub["hubname"], function(err, isEmpty){
+                if(err){
+                    next(new Error(err));
+                    return;
+                }
+                if(isEmpty){
+                    fetchPostsWhenCollectionEmpty(getInstagramFeed, hub["hubname"], id, "instagram", function(posts){
+                        instagram_posts = posts;
+                        checkIfPulledAndSend();
+                    });
+                }else{
+                    db.connect(function(conn){
+                        var query = {}
+                        query["social_name"] = "instagram";
+                        var options = {};
+                        options["limit"] = 20;
+                        options["sort"] =  [["timestamp","desc"]];
+                        if (req.query.offset){
+                            var query = {}
+                            options["skip"] = req.query.offset;
+                            getNextFeed(hub["hubname"], id, "instagram", req.query.offset, conn);
+                        }
+                        conn.collection(hub["hubname"]).find(query, {}, options).toArray(function(err, posts){
+                            instagram_posts = posts;
+                            checkIfPulledAndSend();
+                        });
+                    });
+                }
             });
         }
     });

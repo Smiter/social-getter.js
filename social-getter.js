@@ -23,8 +23,7 @@
 		var init = function(){
 
 			social.settings = {
-				user: $(that).attr('data-user'),
-				social_name: $(that).attr('data-social-name'),
+				hubname: $(that).attr('data-hubname'),
 				columns: $(that).attr('data-columns'),
 				expand: $(that).attr('data-expand'),
 				width: $(that).width(),
@@ -40,19 +39,19 @@
 					'<div id="holder">' +
 						'<div class="nav_holder">' +
 							'<ul class="collections-nav-ul" style="margin-left: -103px;">' +
-								'<li class="clickable collections-nav collections-nav-home  active" data-href="{{user}}">' +
+								'<li class="clickable collections-nav collections-nav-home  active" data-href="{{hubname}}">' +
 									'<i class="icon-home" style="position:relative;"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' + 
-								'<li class="clickable collections-nav collections-nav-fb " data-href="facebook/{{user}}">' +
+								'<li class="clickable collections-nav collections-nav-fb " data-href="{{hubname}}/facebook">' +
 									'<i class="foundicon-facebook"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' +
-								'<li class="clickable collections-nav collections-nav-tw " data-href="twitter/{{user}}">' +
+								'<li class="clickable collections-nav collections-nav-tw " data-href="{{hubname}}/twitter">' +
 									'<i class="foundicon-twitter"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' +
-								'<li class="clickable collections-nav collections-nav-in " data-href="instagram/{{user}}">' +
+								'<li class="clickable collections-nav collections-nav-in " data-href="{{hubname}}/instagram">' +
 									'<i class="foundicon-instagram"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' +
@@ -106,9 +105,9 @@
 				min_by_column.push(1000000);
 			}
 			social.min_by_column = min_by_column;
-			var result = compileTemplate(social.templates.wrapper, {user: social.settings.user})
+			var result = compileTemplate(social.templates.wrapper, {hubname: social.settings.hubname})
 			$(that).append(result);
-			renderPosts(social.settings.user, 0);
+			renderPosts(social.settings.hubname, 0);
 			menuClickHandlers();
 			social.scrollHandler = addScrollHandler();
 		}
@@ -137,7 +136,7 @@
 			this.isHandlerOn = true;
 			this.offset = 0;
 			this.scrollTop = $(window).scrollTop();
-			this.url = social.settings.user;
+			this.url = social.settings.hubname;
 			var scrollElement = window;
 			if(social.settings.expand == "false"){
 				scrollElement = $("#posts_holder");
