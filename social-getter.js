@@ -32,13 +32,16 @@
 				column_paddings_t_b: 20,
 				api_url: 'http://127.0.0.1:3000/api/'
 			}
+			if($(that).width()<=320){
+				social.settings.columns = 1;
+			}
 			social.settings["column_width"] = $(that).width() / social.settings.columns;
 
 			social.templates = {
 				wrapper:
 					'<div id="holder">' +
 						'<div class="nav_holder">' +
-							'<ul class="collections-nav-ul" style="margin-left: -103px;">' +
+							'<ul class="collections-nav-ul">' +
 								'<li class="clickable collections-nav collections-nav-home  active" data-href="{{hubname}}">' +
 									'<i class="icon-home" style="position:relative;"></i>' +
 									'<div class="collection-triangle"></div>' +
@@ -110,6 +113,7 @@
 			renderPosts(social.settings.hubname, 0);
 			menuClickHandlers();
 			social.scrollHandler = addScrollHandler();
+			$(".nav_holder ul").css("left", $(".nav_holder ul").position().left - 80 + "px");
 		}
 
 		Handlebars.registerHelper('get_created_time', function(timestamp, options) {

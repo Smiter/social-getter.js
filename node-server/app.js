@@ -112,7 +112,6 @@ function getTwitterFeed(options, callback){
         twitter_params.qs.max_id = options.next_url;
         skip_tweet_with_max_id = true;
     }
-
     helper.sendRequest(twitter_params, function (err, response, body){
         var posts = Array();
         
@@ -526,14 +525,23 @@ app.get('/api/:hubname', function(req, res, next){
             return newarr;
         }
         function checkIfPulledAndSend(){
-            if( (fb_posts && hub["facebook"]) && (instagram_posts && hub["instagram"] ) && (twitter_posts && hub["twitter"]) ) {
-                if(fb_posts){
+            if(hub["instagram"] == undefined){
+                instagram_posts=true;
+            }
+            if(hub["facebook"] == undefined ){
+                fb_posts=true;
+            }
+            if(hub["twitter"] == undefined){
+                twitter_posts=true;
+            }
+            if( fb_posts && instagram_posts && twitter_posts ) {
+                if(fb_posts && hub["facebook"] != undefined){
                     var posts = fb_posts;
                 }
-                if(instagram_posts){
+                if(instagram_posts && hub["instagram"] != undefined){
                     posts = posts.concat(instagram_posts);
                 }
-                if(twitter_posts){
+                if(twitter_posts && hub["twitter"] != undefined){
                     posts = posts.concat(twitter_posts);
                 }
                 posts = removeDuplicates(posts);
@@ -544,15 +552,14 @@ app.get('/api/:hubname', function(req, res, next){
             }
         }
 
-        if(hub["twitter"]){
-            id = hub["twitter"];
+        if(hub["twitter"] != undefined){
             isCollectionEmpty("twitter", hub["hubname"], function(err, isEmpty){
                 if(err){
                     next(new Error(err));
                     return;
                 }
                 if(isEmpty){
-                    fetchPostsWhenCollectionEmpty(getTwitterFeed, hub["hubname"], id, "twitter", function(posts){
+                    fetchPostsWhenCollectionEmpty(getTwitterFeed, hub["hubname"], hub["twitter"], "twitter", function(posts){
                         twitter_posts = posts;
                         checkIfPulledAndSend();
                     });
@@ -566,7 +573,7 @@ app.get('/api/:hubname', function(req, res, next){
                         if (req.query.offset){
                             var query = {}
                             options["skip"] = req.query.offset;
-                            getNextFeed(hub["hubname"], id, "twitter", req.query.offset, conn);
+                            getNextFeed(hub["hubname"], hub["twitter"], "twitter", req.query.offset, conn);
                         }
                         conn.collection(hub["hubname"]).find(query, {}, options).toArray(function(err, posts){
                             twitter_posts = posts;
@@ -577,15 +584,14 @@ app.get('/api/:hubname', function(req, res, next){
             });
         }
 
-        if(hub["facebook"]){
-            id = hub["facebook"];
+        if(hub["facebook"] != undefined){
             isCollectionEmpty("facebook", hub["hubname"], function(err, isEmpty){
                 if(err){
                     next(new Error(err));
                     return;
                 }
                 if(isEmpty){
-                    fetchPostsWhenCollectionEmpty(getFacebookFeed, hub["hubname"], id, "facebook", function(posts){
+                    fetchPostsWhenCollectionEmpty(getFacebookFeed, hub["hubname"], hub["facebook"], "facebook", function(posts){
                         fb_posts = posts;
                         checkIfPulledAndSend();
                     });
@@ -599,7 +605,7 @@ app.get('/api/:hubname', function(req, res, next){
                         if (req.query.offset){
                             var query = {}
                             options["skip"] = req.query.offset;
-                            getNextFeed(hub["hubname"], id, "facebook", req.query.offset, conn);
+                            getNextFeed(hub["hubname"], hub["facebook"], "facebook", req.query.offset, conn);
                         }
                         conn.collection(hub["hubname"]).find(query, {}, options).toArray(function(err, posts){
                             fb_posts = posts;
@@ -610,15 +616,14 @@ app.get('/api/:hubname', function(req, res, next){
             });
         }
 
-        if(hub["instagram"]){
-            id = hub["instagram"];
+        if(hub["instagram"] != undefined){
             isCollectionEmpty("instagram", hub["hubname"], function(err, isEmpty){
                 if(err){
                     next(new Error(err));
                     return;
                 }
                 if(isEmpty){
-                    fetchPostsWhenCollectionEmpty(getInstagramFeed, hub["hubname"], id, "instagram", function(posts){
+                    fetchPostsWhenCollectionEmpty(getInstagramFeed, hub["hubname"], hub["instagram"], "instagram", function(posts){
                         instagram_posts = posts;
                         checkIfPulledAndSend();
                     });
@@ -632,7 +637,7 @@ app.get('/api/:hubname', function(req, res, next){
                         if (req.query.offset){
                             var query = {}
                             options["skip"] = req.query.offset;
-                            getNextFeed(hub["hubname"], id, "instagram", req.query.offset, conn);
+                            getNextFeed(hub["hubname"], hub["instagram"], "instagram", req.query.offset, conn);
                         }
                         conn.collection(hub["hubname"]).find(query, {}, options).toArray(function(err, posts){
                             instagram_posts = posts;
