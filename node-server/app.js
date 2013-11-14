@@ -421,22 +421,26 @@ app.get('/api/:hubname/:social_name', function(req, res, next){
                 return;
             }
             if(isEmpty){
+                var data = {}
                 switch(social_name){
                     case "twitter":
                         fetchPostsWhenCollectionEmpty(getTwitterFeed, hub["hubname"], id, social_name, function(posts){
-                            res.send(posts);
+                            data['posts'] = posts;
+                            res.send(data);
                         });
                         break;
 
                     case "facebook":
                         fetchPostsWhenCollectionEmpty(getFacebookFeed, hub["hubname"], id, social_name, function(posts){
-                            res.send(posts);
+                            data['posts'] = posts;
+                            res.send(data);
                         });
                         break;
 
                     case "instagram":
                         fetchPostsWhenCollectionEmpty(getInstagramFeed, hub["hubname"], id, social_name, function(posts){
-                            res.send(posts);
+                            data['posts'] = posts;
+                            res.send(data);
                         });
                         break;
                 }
@@ -458,8 +462,10 @@ app.get('/api/:hubname/:social_name', function(req, res, next){
                             }
                         });
                     }
-                    conn.collection(hub["hubname"]).find(query, {}, options).toArray(function(err, items){
-                        res.send(items);
+                    conn.collection(hub["hubname"]).find(query, {}, options).toArray(function(err, posts){
+                        var data = {};
+                        data['posts'] = posts;
+                        res.send(data);
                     });
                 });
             }
@@ -525,14 +531,18 @@ app.get('/api/:hubname', function(req, res, next){
             return newarr;
         }
         function checkIfPulledAndSend(){
+            var not_avialable_social = Array();
             if(hub["instagram"] == undefined){
                 instagram_posts=true;
+                not_avialable_social.push("instagram");
             }
             if(hub["facebook"] == undefined ){
                 fb_posts=true;
+                not_avialable_social.push("facebok");
             }
             if(hub["twitter"] == undefined){
                 twitter_posts=true;
+                not_avialable_social.push("twitter");
             }
             if( fb_posts && instagram_posts && twitter_posts ) {
                 if(fb_posts && hub["facebook"] != undefined){
@@ -548,7 +558,10 @@ app.get('/api/:hubname', function(req, res, next){
                 posts.sort(function(x, y){
                     return y.timestamp - x.timestamp;
                 })
-                res.send(posts.slice(0,20));
+                var data = {};
+                data['posts'] = posts.slice(0,20);
+                data["not_avialable_social"] = not_avialable_social;
+                res.send(data);
             }
         }
 

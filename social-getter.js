@@ -30,7 +30,7 @@
 				height: $(that).css('height'),
 				column_paddings_l_r: 20,
 				column_paddings_t_b: 20,
-				api_url: 'http://127.0.0.1:3000/api/'
+				api_url: 'http://50.57.191.105:3000/api/'
 			}
 			if($(that).width()<=320){
 				social.settings.columns = 1;
@@ -46,15 +46,15 @@
 									'<i class="icon-home" style="position:relative;"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' + 
-								'<li class="clickable collections-nav collections-nav-fb " data-href="{{hubname}}/facebook">' +
+								'<li class="clickable collections-nav collections-nav-facebook " data-href="{{hubname}}/facebook">' +
 									'<i class="foundicon-facebook"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' +
-								'<li class="clickable collections-nav collections-nav-tw " data-href="{{hubname}}/twitter">' +
+								'<li class="clickable collections-nav collections-nav-twitter " data-href="{{hubname}}/twitter">' +
 									'<i class="foundicon-twitter"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' +
-								'<li class="clickable collections-nav collections-nav-in " data-href="{{hubname}}/instagram">' +
+								'<li class="clickable collections-nav collections-nav-instagram " data-href="{{hubname}}/instagram">' +
 									'<i class="foundicon-instagram"></i>' +
 									'<div class="collection-triangle"></div>' +
 								'</li>' +
@@ -105,7 +105,7 @@
 			}
 			var min_by_column = Array();
 			for(var j = 0; j < social.settings.columns; j++){
-				min_by_column.push(1000000);
+				min_by_column.push(Number.MAX_VALUE);
 			}
 			social.min_by_column = min_by_column;
 			var result = compileTemplate(social.templates.wrapper, {hubname: social.settings.hubname})
@@ -113,7 +113,6 @@
 			renderPosts(social.settings.hubname, 0);
 			menuClickHandlers();
 			social.scrollHandler = addScrollHandler();
-			$(".nav_holder ul").css("left", $(".nav_holder ul").position().left - 80 + "px");
 		}
 
 		Handlebars.registerHelper('get_created_time', function(timestamp, options) {
@@ -165,10 +164,21 @@
 			return this;
 		}
 
+		var hideUnsupportedSocialMedia = function(data){
+			if(data["not_avialable_social"] != undefined && data["not_avialable_social"].length > 0){
+				data["not_avialable_social"].forEach(function(element, index, array){
+					$(".collections-nav-"+element).hide();
+				});
+			}
+		}
+
 		var renderPosts = function(url, offset, callback){
 
 			sendRequest(social.settings.api_url + url, function(data){
-				var result = compileTemplate(social.templates.posts, {posts: data, column_width: social.settings.column_width - social.settings.column_paddings_l_r})
+
+				hideUnsupportedSocialMedia(data);
+
+				var result = compileTemplate(social.templates.posts, {posts: data['posts'], column_width: social.settings.column_width - social.settings.column_paddings_l_r})
 				$("#posts_holder").append(result);
 
 				var left_array = [];
@@ -179,7 +189,7 @@
 				function setPostPositions(){
 					$("#loading-holder").hide();
 					var postElements = $("#posts_holder .post");
-					data.forEach(function(element, index, array){
+					data['posts'].forEach(function(element, index, array){
 						var curr_post = $("#posts_holder ." + array[index]._id);
 						if(index + offset - social.settings.columns >= 0){
 							var min = findMin(social.min_by_column);
@@ -218,6 +228,9 @@
 						}
 					}
 				}
+				$("#posts_holder img").error(function(){
+					this.height = 1;
+				});
 				function checkIfImagesLoaded(callback){
 					setTimeout(function(){
 						var isHeightZero = true;
@@ -240,6 +253,7 @@
 				}
 
 				checkIfImagesLoaded(function(){
+					$("#posts_holder").show();
 					makeFirstLineUpperCase();
 					setPostPositions();
 				});
@@ -263,7 +277,7 @@
 		    	callback(data);
 		    })
 		    .fail(function(data) {
-		    	console.log("fail");
+		    	callback("fail");
 		    })
 		    .always(function(data) {
 		    });
