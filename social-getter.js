@@ -210,7 +210,7 @@
 				function makeFirstLineUpperCase(){
 					$("#posts_holder").show();
 					var text_height = Number.MAX_VALUE;
-					var text_entities = $("#posts_holder .post-title a");
+					var text_entities = $(".social-getter #posts_holder .post-title a");
 					for(var i = offset; i < text_entities.length; i ++){
 						var entity = $(text_entities[i]);
 						var curr_text = entity.text();

@@ -498,6 +498,9 @@ function getNextFeed(hubname, id, social_name, offset, conn){
                 break;
            }
        }
+       if(err){
+        log.error("GetNextUrls Error - " + err)
+       }
     });
 }
 
