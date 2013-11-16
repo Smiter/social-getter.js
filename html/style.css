@@ -19,8 +19,11 @@
 	display: block;
 	position: relative;
 	height: 100%;
-	display: none;
 	margin-left: 15px;
+}
+
+.social-getter #posts_holder{
+	visibility: hidden;
 }
 
 #posts_holder .post-content{
@@ -47,9 +50,8 @@
 	margin-left: 2px;
 }
 
-
 #posts_holder .post img{
-	width: auto;
+	width: auto\9;
 	height: auto;
 	max-width: 100%;
 	vertical-align: middle;

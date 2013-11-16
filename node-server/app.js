@@ -114,47 +114,49 @@ function getTwitterFeed(options, callback){
     }
     helper.sendRequest(twitter_params, function (err, response, body){
         var posts = Array();
-        
-        body.forEach(function(element, index, array){
-            if (!skip_tweet_with_max_id || element.id_str != options.next_url){
-                var post = {};
-                post["user"] = options.id;
-                post["social_name"] = "twitter";
-                post["_id"] = element.id_str;
-                post["timestamp"] = Math.round((new Date(element.created_at).getTime())/1000);
-                post["text"] = element.text;
-                //if we grab text posts then we should retrieve element.entities.urls - Array of urls inside the post
-                post["author"] = element.user.name;
-                post["author_link"] = "http://twitter.com/"+options.id
-                post["author_nickname"] = element.user.screen_name
-                post["avatar"] = element.user.profile_image_url;
-                if(element.entities.urls && element.entities.urls.length > 0)
-                    post["link"] = element.entities.urls[0].url;
-                var media = element.entities.media;
-                if(media != undefined && media != null && media.length > 0){
-                    media.forEach(function(image_element, index, array){
-                        post["image"] = image_element.media_url;
-                        post["link"] = image_element.url;
-                    })
+        if(body != null && body != undefined){
+            body.forEach(function(element, index, array){
+                if (!skip_tweet_with_max_id || element.id_str != options.next_url){
+                    var post = {};
+                    post["user"] = options.id;
+                    post["social_name"] = "twitter";
+                    post["_id"] = element.id_str;
+                    post["timestamp"] = Math.round((new Date(element.created_at).getTime())/1000);
+                    post["text"] = element.text;
+                    //if we grab text posts then we should retrieve element.entities.urls - Array of urls inside the post
+                    post["author"] = element.user.name;
+                    post["author_link"] = "http://twitter.com/"+options.id
+                    post["author_nickname"] = element.user.screen_name
+                    post["avatar"] = element.user.profile_image_url;
+                    if(element.entities.urls && element.entities.urls.length > 0)
+                        post["link"] = element.entities.urls[0].url;
+                    var media = element.entities.media;
+                    if(media != undefined && media != null && media.length > 0){
+                        media.forEach(function(image_element, index, array){
+                            post["image"] = image_element.media_url;
+                            post["link"] = image_element.url;
+                        })
+                    }
+                    if(!post["link"]){
+                        post["link"] = "https://twitter.com/" + options.id + "/status/" + element.id_str;
+                    }
+                    posts.push(post);
                 }
-                if(!post["link"]){
-                    post["link"] = "https://twitter.com/" + options.id + "/status/" + element.id_str;
-                }
-                posts.push(post);
-            }
-        });
+            });
 
-        var max_id = body[body.length - 1].id_str;
-        
-        if(options.next_url == null || options.next_url != max_id){
-            options["next_url"] = max_id;
-            if(callback && typeof callback === 'function')
-                options["callback"] = callback;
-            options["posts"] = posts;
-            options["social_name"] = "twitter";
-            addPostsToDataBase(getTwitterFeed, options);
+            var max_id = body[body.length - 1].id_str;
+            
+            if(options.next_url == null || options.next_url != max_id){
+                options["next_url"] = max_id;
+                if(callback && typeof callback === 'function')
+                    options["callback"] = callback;
+                options["posts"] = posts;
+                options["social_name"] = "twitter";
+                addPostsToDataBase(getTwitterFeed, options);
+            }
         }
     });
+
 
 }
 
@@ -562,7 +564,11 @@ app.get('/api/:hubname', function(req, res, next){
                     return y.timestamp - x.timestamp;
                 })
                 var data = {};
-                data['posts'] = posts.slice(0,20);
+                var limit = 20;
+                if (req.query.unlimit){
+                    limit = 60;
+                }
+                data['posts'] = posts.slice(0, limit);
                 data["not_avialable_social"] = not_avialable_social;
                 res.send(data);
             }
