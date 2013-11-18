@@ -30,7 +30,7 @@
 				height: $(that).css('height'),
 				column_paddings_l_r: 20,
 				column_paddings_t_b: 20,
-				api_url: 'http://50.57.191.105:3000/api/'
+				api_url: 'http://127.0.0.1:3000/api/'
 			}
 			if($(that).width()<=320){
 				social.settings.columns = 1;
@@ -146,19 +146,26 @@
 				scrollElement = $("#posts_holder");
 				$("#posts_holder").niceScroll({autohidemode:false, cursorwidth: 7});
 			}	
+
+			function getNewPosts(){
+				isHandlerOn = false;
+				offset = offset + 20;
+				renderPosts(url+"?offset=" + offset, offset, function(){
+					isHandlerOn = true;
+					$("#posts_holder").getNiceScroll().resize();
+				});
+			}
 			$(scrollElement).on('scroll', function(){
 				var documentElementHeight = $(document).height();
 				if(social.settings.expand == "false"){
-					documentElementHeight = scrollElement[0].scrollHeight;
-				}
-				if(isHandlerOn && documentElementHeight - $(scrollElement).scrollTop() - 
-					$(scrollElement).height() - 650 <= 0 && scrollTop < $(scrollElement).scrollTop()){
-					isHandlerOn = false;
-					offset = offset + 20;
-					renderPosts(url+"?offset=" + offset, offset, function(){
-						isHandlerOn = true;
-						$("#posts_holder").getNiceScroll().resize();
-					});
+					if(isHandlerOn && $("#ascrail2000 div").position().top + $("#ascrail2000 div").height()>=$("#ascrail2000").height()-100 && scrollTop < $(scrollElement).scrollTop()){
+                 		getNewPosts();
+                 	}
+				}else{
+					if(isHandlerOn && documentElementHeight - $(scrollElement).scrollTop() - 
+						$(scrollElement).height() - 650 <= 0 && scrollTop < $(scrollElement).scrollTop()){
+						getNewPosts();
+					}
 				}
 				scrollTop = $(window).scrollTop();
 			});
