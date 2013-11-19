@@ -84,7 +84,7 @@
 										'<div class="post-text">'+
 										    '<div class="post-title">'+
 								                '<p>'+
-								                    '<a href="{{link}}" target="_blank">{{text}}'+
+								                    '<a href="{{link}}" target="_blank">{{{text}}}'+
 								                        
 								                    '</a>'+
 								                '</p>'+
