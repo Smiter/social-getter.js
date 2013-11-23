@@ -543,15 +543,16 @@ app.get('/api/:hubname', function(req, res, next){
             }
             if(hub["facebook"] == undefined ){
                 fb_posts=true;
-                not_avialable_social.push("facebok");
+                not_avialable_social.push("facebook");
             }
             if(hub["twitter"] == undefined){
                 twitter_posts=true;
                 not_avialable_social.push("twitter");
             }
             if( fb_posts && instagram_posts && twitter_posts ) {
+                var posts = [];
                 if(fb_posts && hub["facebook"] != undefined){
-                    var posts = fb_posts;
+                    posts = fb_posts;
                 }
                 if(instagram_posts && hub["instagram"] != undefined){
                     posts = posts.concat(instagram_posts);
