@@ -69,7 +69,7 @@
 
 					posts:
 				 		'{{#each posts}}' +
-							'<div class="post {{_id}}" style="width: {{../column_width}}px; left: 0px; top: 0px">' +
+							'<div class="post {{_id}}" id="{{_id}}" data-visible="{{accepted}}" style="width: {{../column_width}}px; left: 0px; top: 0px">' +
 								'<div class="post-holder">' +
 									'<div class="post-content">' +
 										'{{#unless image}}<div class="post-icon">' +
