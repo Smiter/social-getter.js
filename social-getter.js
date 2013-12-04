@@ -209,15 +209,16 @@
 							social.min_by_column[index] = parseInt($(curr_post).css('top'), 10)  +	$(curr_post).height();
 							curr_post.css("left", left_array[index]+"px");
 						}
-						//$("#posts_holder").show();
 						$(".social-getter #posts_holder").css("visibility", 'visible');
+					});
+					$.event.trigger({
+						type: "socialGetterNewPostsLoaded",
 					});
 					if(callback && typeof callback === 'function')
 						callback();
 				}
 
 				function makeFirstLineUpperCase(){
-					//$("#posts_holder").show();
 					$(".social-getter #posts_holder").css("visibility", 'visible');
 					var text_height = Number.MAX_VALUE;
 					var text_entities = $(".social-getter #posts_holder .post-title a");
@@ -252,7 +253,6 @@
 						});
 						if(!isHeightZero){
 							checkIfImagesLoaded(function(){
-								//$("#posts_holder").show();
 								$(".social-getter #posts_holder").css("visibility", 'visible');
 								makeFirstLineUpperCase();
 								setPostPositions();
@@ -265,7 +265,6 @@
 
 				checkIfImagesLoaded(function(){
 					$(".social-getter #posts_holder").css("visibility", 'visible');
-					//$("#posts_holder").show();
 					makeFirstLineUpperCase();
 					setPostPositions();
 				});
