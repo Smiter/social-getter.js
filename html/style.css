@@ -1,266 +1,338 @@
 .social-getter{
-	padding-right: 25px;
-	font-family: Helvetica,Arial,sans !important;
+    padding-right: 25px;
+    font-family: Helvetica,Arial,sans !important;
 }
 #holder{
-	width: 100%;
-	position: relative;
-	margin: 0 auto;
-	padding: 0px;
-	height: 100%;
+    width: 100%;
+    position: relative;
+    margin: 0 auto;
+    padding: 0px;
+    height: 100%;
 }
 
 #posts_holder a {
-	text-decoration: none;
+    text-decoration: none;
 }
 
 #posts_holder{
-	width: 100%;
-	display: block;
-	position: relative;
-	height: 100%;
-	margin-left: 15px;
+    width: 100%;
+    display: block;
+    position: relative;
+    height: 100%;
+    margin-left: 15px;
 }
 
 .social-getter #posts_holder{
-	visibility: hidden;
+    visibility: hidden;
 }
 
 #posts_holder .post-content{
-	position: relative;
-	padding: 5px;
+    position: relative;
+    padding: 5px;
 }
 
 .post-holder {
-	height: 100%;
+    height: 100%;
 }
 
 #posts_holder .post{
-	width: 310px;
-	box-shadow: 0 1px 3px rgba(34,25,25,0.4);
-	-moz-box-shadow: 0 1px 2px rgba(34,25,25,0.4);
-	-webkit-box-shadow: 0 1px 3px rgba(34,25,25,0.4);
-	background-color: #FFF;
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	height: 100%;
-	height: auto;
-	margin-top: 2px;
-	margin-left: 2px;
+    width: 310px;
+    box-shadow: 0 1px 3px rgba(34,25,25,0.4);
+    -moz-box-shadow: 0 1px 2px rgba(34,25,25,0.4);
+    -webkit-box-shadow: 0 1px 3px rgba(34,25,25,0.4);
+    background-color: #FFF;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    height: 100%;
+    height: auto;
+    margin-top: 2px;
+    margin-left: 2px;
 }
 
 #posts_holder .post img{
-	width: auto\9;
-	height: auto;
-	max-width: 100%;
-	vertical-align: middle;
-	border: 0;
-	-ms-interpolation-mode: bicubic;
+    width: auto\9;
+    height: auto;
+    max-width: 100%;
+    width: 100%;
+    vertical-align: middle;
+    border: 0;
+    -ms-interpolation-mode: bicubic;
 }
 
 #posts_holder .post a{
-	display: block;
+    display: block;
 }
 
 #posts_holder .post-text {
-	background-color: #FFF;
+    background-color: #FFF;
 }
 
 #posts_holder .post-title {
-	padding: 7px 17px;
-	line-height: 0.8;
-	font-size: 24px;
+    padding: 7px 17px;
+    line-height: 0.8;
+    font-size: 24px;
+}
+
+#posts_holder .event .name{
+    color: #3b3b3b;
+    -webkit-transition: color 0.2s ease-in;
+    -moz-transition: color 0.2s ease-in;
+    -o-transition: color 0.2s ease-in;
+    transition: color 0.2s ease-in;
+    font-style: normal;
+    font-size: 20px;
+    word-wrap: break-word;
+    line-height: 1;
+}
+
+#posts_holder .post-share .post-share-fb-a{
+    position: absolute;
+    right: 40px;
+    top: 4px;
+    color: #007fff;
+}
+
+#posts_holder .post-share .post-share-tw-a{
+    position: absolute;
+    right: 10px;
+    top: 4px;
+    color: #007fff;
+}
+
+#posts_holder .post-share .post-share-fb-a:hover, #posts_holder .post-share .post-share-fb-a:focus {
+    color: #0059b3;
+}  
+
+#posts_holder .post-share .post-share-tw-a:hover, #posts_holder .post-share .post-share-tw-a:focus {
+    color: #0059b3;
+}   
+
+
+#posts_holder .event .time{
+    color: rgb(167, 167, 167);
+}
+
+#posts_holder .event .time, #posts_holder .event .desc{
+    margin: 0; line-height: 1.3;font-size: 15px;
+}
+
+#posts_holder .event .time, #posts_holder .event .desc{
+    margin: 0; line-height: 1.3;font-size: 15px;
+    margin-top: 5px;
+}
+
+#posts_holder .event .desc{
+    font-size: 14px;
 }
 
 #posts_holder .post-title p {
-	font-size: 12px;
-	font-family: Helvetica,Arial,sans !important;
+    font-size: 12px;
+    font-family: Helvetica,Arial,sans !important;
 }
 
 #posts_holder p {
-	margin: 0 0 10px;
+    margin: 0 0 10px;
 }
 
 #posts_holder .post-title a {
-	color: #3b3b3b;
-	-webkit-transition: color 0.2s ease-in;
-	-moz-transition: color 0.2s ease-in;
-	-o-transition: color 0.2s ease-in;
-	transition: color 0.2s ease-in;
-	font-style: normal;
-	font-size: 25px;
-	word-wrap: break-word;
+    color: #3b3b3b;
+    -webkit-transition: color 0.2s ease-in;
+    -moz-transition: color 0.2s ease-in;
+    -o-transition: color 0.2s ease-in;
+    transition: color 0.2s ease-in;
+    font-style: normal;
+    font-size: 25px;
+    word-wrap: break-word;
 }
 
 #posts_holder .post-timestamp{
-	padding: 4px 17px;
-	font-size: 11px;
-	margin-top: -15px;
-	color: rgb(167, 167, 167);
+    padding: 4px 17px;
+    font-size: 11px;
+    margin-top: -15px;
+    color: rgb(167, 167, 167);
+}
+
+.icon-facebook:before {
+    content: "\f09a";
 }
 
 #posts_holder .post-share{
-	width: 100%;
-	height: 35px;
-	background-color: #ecf6f5;
+    width: 100%;
+    height: 35px;
+    background-color: #ecf6f5;
+    position:  relative;
 }
 
 #posts_holder .post-accaunt{
-	position: absolute;
-	bottom: 6px;
-	left: 16px;
-	font-size: 10px;
+    position: absolute;
+    bottom: 6px;
+    left: 16px;
+    font-size: 10px;
 }
 
 #posts_holder .post-accaunt img {
-	width: 23px;
-	height: 23px;
+    width: 23px;
+    height: 23px;
 }
 
 #posts_holder .post-accaunt a {
-	margin-left: 5px;
-	color: rgba(0, 0, 0, 0.7);
-	position: absolute;
-	top: 0;
-	left: 22px;
-	width: 200px;
-	line-height: 1.1;
-	font-size: 11px;
+    margin-left: 5px;
+    color: rgba(0, 0, 0, 0.7);
+    position: absolute;
+    top: 0;
+    left: 22px;
+    width: 150px;
+    line-height: 1.1;
+    font-size: 11px;
 }
 
 #posts_holder .post-accaunt b {
-	font-size: 13px;
+    font-size: 13px;
 }
 
 .nav_holder {
-	text-align: center;
-	padding-top: 42px;
-	z-index: 9;
-	top: 0;
-	display: block;
-	padding-top: 60px;
-	width: 100%;
+    text-align: center;
+    z-index: 9;
+    top: 0;
+    display: block;
+    width: 100%;
 }
 
 .nav_holder ul {
-	list-style-type: none;
-	padding: 8px 10px;
-	top: -8px;
-	position: absolute;
-	left: 0;
-	right: 0;
-	text-align: center;
+    list-style-type: none;
+    padding: 0 10px;
+    //top: -8px;
+   // position: absolute;
+    //left: 0;
+    //right: 0;
+    text-align: center;
+}
+
+.accounts-nav-bar
+{
+    width: 320px;
+    background: rgb(251,250,233);
+    float: left;
+    margin-left: 16px;
+    margin-bottom: 10px;
+    padding: 10px 5px 0px 5px;
+}
+
+.accounts-nav-bar p{
+    font-family: 'Open Sans Condensed Bold', serif;
+    color: rgb(48,56,93);
+    font-size:  22px;
+    font-weight: bold;
 }
 
 .nav_holder li:hover, .nav_holder li.active {
-	text-decoration: none;
-	opacity: 1;
+    text-decoration: none;
+    opacity: 1;
 }
 
 .nav_holder li.collections-nav-home {
-	margin-left: 0;
-	font-size: 21px;
-	padding: 1px 4px;
-	top: -2px !important;
+    margin-left: 0;
+    font-size: 31px;
+    padding: 1px 4px;
+    top: -2px !important;
 }
 
 .nav_holder li {
-	display: inline-block;
-	margin-left: 6px;
-	color: white;
-	padding: 1px 7px;
-	font-size: 18px;
-	height: 26px;
-	opacity: 1;
-	margin-top: 5px;
+    display: inline-block;
+    margin-left: 6px;
+    color: white;
+    padding: 1px 7px;
+    font-size: 22px;
+    height: auto;
+    opacity: 1;
+    margin-top: 5px;
+    width: 44px;
 }
 
 .color-namebar-buttons, li.collections-nav {
-	background-color: #CC0000;
+    background-color: #CC0000;
 }
 
 .clickable {
-	cursor: hand;
-	cursor: pointer;
+    cursor: hand;
+    cursor: pointer;
 }
 
 .icon-home:before {
-	content: "\f015";
+    content: "\f015";
 }
 
 [class^="icon-"]:before, [class*=" icon-"]:before {
-	text-decoration: inherit;
-	display: inline-block;
-	speak: none;
-}
-
-.nav_holder li.collections-nav-home {
-	font-size: 21px;
+    text-decoration: inherit;
+    display: inline-block;
+    speak: none;
 }
 
 li [class^="icon-"], li [class*=" icon-"] {
-	display: inline-block;
-	width: 1.25em;
-	text-align: center;
+    display: inline-block;
+    width: 1.25em;
+    text-align: center;
 }
 
 .nav_holder .collections-nav-home .collection-triangle {
-	margin-top: -3px;
-	margin-left: 6px;
+    margin-top: -3px;
+    margin-left: 6px;
 }
 
 .nav_holder .collection-triangle {
-	display: none;
-	margin-top: -4px;
-	margin-left: 2px;
+    display: none;
+    margin-top: -4px;
+    margin-left: 2px;
 }
 
 .collection-triangle {
-	border-color: #CC0000 transparent transparent transparent;
+    border-color: #CC0000 transparent transparent transparent;
 }
 
 .nav_holder li:hover .collection-triangle, .nav_holder li.active .collection-triangle {
-	display: block;
-	width: 0px;
-	height: 0px;
-	border-style: solid;
-	border-width: 7px 7.5px 0 7.5px;
+    display: block;
+    width: 0px;
+    height: 0px;
+    border-style: solid;
+    border-width: 7px 7.5px 0 7.5px;
 }
 
 .nav_holder li {
-	color: white;
-	font-size: 18px;
-	line-height: 1;
+    color: white;
+    line-height: 1;
 }
 
 #loading-holder{
-	width: 100%;
-	text-align: center;
-	margin-top: 100px;
+    width: 100%;
+    text-align: center;
 }
 
 #loading-holder img {
-	height: auto;
-	max-width: 100%;
-	vertical-align: middle;
-	border: 0;
+    height: auto;
+    max-width: 100%;
+    vertical-align: middle;
+    border: 0;
 }
 
 .post-icon{
-	display: block;
-	text-align: center;
-	padding-top: 13px;
-	font-size: 21px;
-	color: #95bcb8;
+    display: block;
+    text-align: center;
+    padding-top: 13px;
+    font-size: 21px;
+    color: #95bcb8;
+}
+
+.post-holder .post-icon img{
+    width: 40px !important;
 }
 
 .post-icon i{
-	display: inline-block;
+    display: inline-block;
 }
 
 .icon-twitter:before {
-	content: "\f099";
+    content: "\f099";
 }
 
 .icon-facebook{
@@ -268,79 +340,115 @@ li [class^="icon-"], li [class*=" icon-"] {
 }
 
 @font-face{
-	font-family:'FontAwesome';
-	src:url('http://netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.eot');
-	src:url('http://netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.eot?#iefix') format('embedded-opentype'),
-	url('http://netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.woff') format('woff'),
-	url('http://netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.ttf') format('truetype');
-	font-weight:normal;
-	font-style:normal
+    font-family:'FontAwesome';
+    src:url('http://netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.eot');
+    src:url('http://netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.eot?#iefix') format('embedded-opentype'),
+    url('http://netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.woff') format('woff'),
+    url('http://netdna.bootstrapcdn.com/font-awesome/3.0.2/font/fontawesome-webfont.ttf') format('truetype');
+    font-weight:normal;
+    font-style:normal
 }
 
 @font-face{
-	font-family:"SocialFoundicons";
-	src:url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.eot");
-	font-weight:normal;
-	font-style:normal
+    font-family:"SocialFoundicons";
+    src:url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.eot");
+    font-weight:normal;
+    font-style:normal
 }
 
 @font-face{
-	font-family:"SocialFoundicons";
-	src:url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.eot"),
-	url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.eot?#iefix") format("embedded-opentype"),
-	url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.woff") format("woff"),
-	url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.ttf") format("truetype"),
-	url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.svg#SocialFoundicons") format("svg");
-	font-weight:normal;
-	font-style:normal
+    font-family:"SocialFoundicons";
+    src:url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.eot"),
+    url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.eot?#iefix") format("embedded-opentype"),
+    url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.woff") format("woff"),
+    url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.ttf") format("truetype"),
+    url("http://www.tintup.com/public/css/foundation_icons_social/social_foundicons.svg#SocialFoundicons") format("svg");
+    font-weight:normal;
+    font-style:normal
 }
 
 [class^="icon-"], [class*=" icon-"]{
-	font-family: 'FontAwesome';
-	font-weight:normal;
-	font-style:normal;
-	text-decoration:inherit;
-	display:inline;
-	width:auto;
-	height:auto;
-	vertical-align:baseline;
-	background-image:none!important;
-	background-position:0 0;
-	background-repeat:repeat;
-	line-height: 27.5px;
+    font-family: 'FontAwesome';
+    font-weight:normal;
+    font-style:normal;
+    text-decoration:inherit;
+    display:inline;
+    width:auto;
+    height:auto;
+    vertical-align:baseline;
+    background-image:none!important;
+    background-position:0 0;
+    background-repeat:repeat;
+    line-height: 27.5px;
 }
 
 [class*="foundicon-"] {
-	display: inline;
-	width: auto;
-	height: auto;
-	line-height: inherit;
-	vertical-align: baseline;
-	background-image: none;
-	background-position: 0 0;
-	background-repeat: repeat;
-	line-height: 1.43;
+    display: inline;
+    width: auto;
+    height: auto;
+    line-height: inherit;
+    vertical-align: baseline;
+    background-image: none;
+    background-position: 0 0;
+    background-repeat: repeat;
+    line-height: 1.43;
 }
 
 
 
 [class*="foundicon-"]:before {
-	font-family: "SocialFoundicons";
-	font-weight: normal;
-	font-style: normal;
-	text-decoration: inherit;
+    font-family: "SocialFoundicons";
+    font-weight: normal;
+    font-style: normal;
+    text-decoration: inherit;
 }
 
 .foundicon-facebook:before {
-	content: "\f003";
+    content: "\f003";
 }
 
 .foundicon-twitter:before {
-	content: "\f004";
+    content: "\f004";
 }
 
 .foundicon-instagram:before {
-	content: "\f015";
+    content: "\f015";
 }
 
+.foundicon-youtube:before {
+    content: "\f00e";
+}
+
+#posts_holder .post-share .comment-fb-a {
+    position: absolute;
+    right: 60px;
+    top: 10px;
+    font-size: 11px;
+    color: #428bca;
+}
+
+#posts_holder .post-share .comment-fb-a:hover {
+    color: #428bca;
+}
+
+.collections-sub{
+    position: fixed;
+    top: 41px;
+    left: 890px;
+    display: none;
+    background-color: #0B5BE6;
+    color: white;
+    font-weight: bold;
+    border-radius: 2px;
+    padding: 7px 12px;
+    z-index: 100;
+}
+
+.collections-sub-item {
+    opacity: 0.8;
+}
+
+.collections-sub-item:hover {
+    opacity: 1;
+}
 
